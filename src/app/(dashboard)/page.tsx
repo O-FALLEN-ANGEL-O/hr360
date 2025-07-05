@@ -42,7 +42,7 @@ import {
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const applications = [
+const initialApplications = [
   {
     title: "Senior Product Manager",
     company: "Innovate Inc.",
@@ -87,7 +87,7 @@ const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "des
   Hired: "default"
 };
 
-const departmentData = [
+const initialDepartmentData = [
     { name: 'Engineering', value: 450, color: 'hsl(var(--chart-1))' },
     { name: 'Sales', value: 250, color: 'hsl(var(--chart-2))' },
     { name: 'Marketing', value: 180, color: 'hsl(var(--chart-3))' },
@@ -96,7 +96,7 @@ const departmentData = [
     { name: 'Other', value: 143, color: 'hsl(var(--muted))' }
 ];
 
-const pipelineData = [
+const initialPipelineData = [
     { name: 'Applied', value: 250, fill: 'hsl(var(--chart-1))' },
     { name: 'Screening', value: 180, fill: 'hsl(var(--chart-2))' },
     { name: 'Interview', value: 95, fill: 'hsl(var(--chart-3))' },
@@ -118,10 +118,30 @@ const StatCard = ({ title, value, icon, description }: { title: string; value: s
 );
 
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false)
-
+  const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState({ employees: 1243, attrition: 8.2, openPositions: 42, compliance: 99.8 });
+  const [departmentData, setDepartmentData] = useState(initialDepartmentData);
+  const [pipelineData, setPipelineData] = useState(initialPipelineData);
+  
   useEffect(() => {
     setMounted(true)
+    const interval = setInterval(() => {
+        setStats(prev => ({
+            employees: prev.employees + Math.floor(Math.random() * 3) - 1,
+            attrition: Math.max(0, prev.attrition + (Math.random() - 0.5) * 0.1),
+            openPositions: prev.openPositions + Math.floor(Math.random() * 3) - 1,
+            compliance: Math.min(100, prev.compliance + (Math.random() - 0.4) * 0.1),
+        }));
+
+        setPipelineData(prev => prev.map(p => ({
+            ...p,
+            value: Math.max(10, p.value + Math.floor(Math.random() * 5) - 2)
+        })));
+        
+    }, 3000); // Update every 3 seconds
+
+    return () => clearInterval(interval);
+
   }, [])
   
   return (
@@ -129,10 +149,10 @@ export default function DashboardPage() {
       <PageHeader title="HR Dashboard" description="An overview of key metrics for the organization." />
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Employees" value="1,243" icon={<Users className="h-4 w-4 text-muted-foreground" />} description="+20.1% from last month" />
-        <StatCard title="Attrition Rate" value="8.2%" icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="-1.5% from last quarter" />
-        <StatCard title="Open Positions" value="42" icon={<Target className="h-4 w-4 text-muted-foreground" />} description="+5 since last week" />
-        <StatCard title="Compliance" value="99.8%" icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />} description="All policies acknowledged" />
+        <StatCard title="Total Employees" value={stats.employees.toLocaleString()} icon={<Users className="h-4 w-4 text-muted-foreground" />} description="+20.1% from last month" />
+        <StatCard title="Attrition Rate" value={`${stats.attrition.toFixed(1)}%`} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="-1.5% from last quarter" />
+        <StatCard title="Open Positions" value={String(stats.openPositions)} icon={<Target className="h-4 w-4 text-muted-foreground" />} description="+5 since last week" />
+        <StatCard title="Compliance" value={`${stats.compliance.toFixed(1)}%`} icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />} description="All policies acknowledged" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -211,7 +231,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map((app) => (
+              {initialApplications.map((app) => (
                 <TableRow key={app.title}>
                   <TableCell className="font-medium">{app.title}</TableCell>
                   <TableCell>{app.company}</TableCell>

@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +42,21 @@ const getStatusBadgeClass = (status: string) => {
 export default function RemoteStatusPage() {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+        setEmployees(prevEmployees => {
+            const randomIndex = Math.floor(Math.random() * prevEmployees.length);
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            return prevEmployees.map((emp, index) => 
+                index === randomIndex ? { ...emp, status: randomStatus } : emp
+            );
+        });
+    }, 4000); // Change a random employee's status every 4 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleStatusChange = (employeeId: number, newStatus: Status) => {
     setEmployees(
       employees.map((emp) =>
@@ -76,7 +92,7 @@ export default function RemoteStatusPage() {
             <CardFooter className="flex justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Badge className={cn("text-xs cursor-pointer", getStatusBadgeClass(employee.status))}>
+                  <Badge className={cn("text-xs cursor-pointer transition-all", getStatusBadgeClass(employee.status))}>
                     {employee.status}
                   </Badge>
                 </DropdownMenuTrigger>

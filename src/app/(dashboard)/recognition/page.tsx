@@ -1,12 +1,13 @@
 
 "use client"
 
+import { useState, useEffect } from "react"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Trophy, Gift, Sparkles } from "lucide-react"
+import { Trophy, Gift, Sparkles, UserCheck, MessageSquare, PartyPopper } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const leaderboard = [
@@ -17,11 +18,17 @@ const leaderboard = [
   { name: "Fiona Garcia", points: 1850, avatar: "https://placehold.co/100x100.png?text=FG" },
 ]
 
-const recentKudos = [
-  { from: "Charlie Brown", to: "Diana Smith", reason: "for exceptional leadership on the Q2 project.", points: 50 },
-  { from: "Admin", to: "Entire Sales Team", reason: "for exceeding their quarterly targets.", points: 100 },
-  { from: "Fiona Garcia", to: "George Black", reason: "for being a fantastic mentor and guide.", points: 30 },
-  { from: "HR Bot", to: "Alice Johnson", reason: "for a 3-year work anniversary!", points: 75 },
+const initialKudos = [
+  { id: 1, from: "Charlie Brown", to: "Diana Smith", reason: "for exceptional leadership on the Q2 project.", points: 50, icon: UserCheck },
+  { id: 2, from: "Admin", to: "Entire Sales Team", reason: "for exceeding their quarterly targets.", points: 100, icon: Trophy },
+  { id: 3, from: "Fiona Garcia", to: "George Black", reason: "for being a fantastic mentor and guide.", points: 30, icon: MessageSquare },
+  { id: 4, from: "HR Bot", to: "Alice Johnson", reason: "for a 3-year work anniversary!", points: 75, icon: PartyPopper },
+]
+
+const kudosPool = [
+    { from: "Marketing Team", to: "Sales Team", reason: "for the successful joint campaign launch.", points: 40, icon: UserCheck },
+    { from: "CEO", to: "Engineering Department", reason: "for launching the new feature ahead of schedule.", points: 150, icon: Trophy },
+    { from: "Bob Williams", to: "Fiona Garcia", reason: "for the helpful and detailed documentation.", points: 25, icon: MessageSquare },
 ]
 
 const rewards = [
@@ -32,6 +39,22 @@ const rewards = [
 ]
 
 export default function RecognitionPage() {
+  const [recentKudos, setRecentKudos] = useState(initialKudos);
+
+  useEffect(() => {
+    const kudosClone = [...kudosPool];
+    const interval = setInterval(() => {
+        if(kudosClone.length > 0) {
+            const newKudo = kudosClone.pop();
+            if(newKudo) {
+                setRecentKudos(prev => [{...newKudo, id: Date.now()}, ...prev].slice(0, 5));
+            }
+        }
+    }, 5000); // Add a new kudo every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -72,22 +95,25 @@ export default function RecognitionPage() {
                     <CardDescription>Latest recognitions across the company.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-4">
-                        {recentKudos.map((kudo, index) => (
-                            <li key={index} className="p-4 rounded-lg border bg-muted/20 flex items-start gap-4">
-                               <Avatar>
-                                    <AvatarFallback>{kudo.from.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                               </Avatar>
-                                <div className="flex-1">
-                                    <p className="text-sm">
-                                        <span className="font-semibold">{kudo.from}</span> gave kudos to <span className="font-semibold">{kudo.to}</span>
-                                    </p>
-                                    <p className="text-muted-foreground text-sm mt-1 italic">"{kudo.reason}"</p>
+                    <div className="space-y-4">
+                        {recentKudos.map((kudo) => {
+                            const Icon = kudo.icon;
+                            return (
+                                <div key={kudo.id} className="p-4 rounded-lg border bg-muted/20 flex items-start gap-4 animate-in fade-in-50">
+                                <Avatar>
+                                        <AvatarFallback><Icon className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
+                                </Avatar>
+                                    <div className="flex-1">
+                                        <p className="text-sm">
+                                            <span className="font-semibold">{kudo.from}</span> gave kudos to <span className="font-semibold">{kudo.to}</span>
+                                        </p>
+                                        <p className="text-muted-foreground text-sm mt-1 italic">"{kudo.reason}"</p>
+                                    </div>
+                                    <Badge className="bg-green-500 hover:bg-green-600 text-white">+{kudo.points} pts</Badge>
                                 </div>
-                                <Badge className="bg-green-500 hover:bg-green-600 text-white">+{kudo.points} pts</Badge>
-                            </li>
-                        ))}
-                    </ul>
+                            )
+                        })}
+                    </div>
                 </CardContent>
             </Card>
 
