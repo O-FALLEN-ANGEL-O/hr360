@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, Mail, Check, X, CalendarPlus } from "lucide-react"
+import { MoreHorizontal, Mail, Check, X, CalendarPlus, Clipboard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +50,15 @@ export default function ApplicantsPage() {
   };
 
   const handleAction = (applicantName: string, action: string) => {
+    if (action === "Send Assessment") {
+      navigator.clipboard.writeText(`${window.location.origin}/assessment`);
+      toast({
+          title: "Assessment Link Copied!",
+          description: `The link has been copied to your clipboard. Send it to ${applicantName}.`
+      });
+      return;
+    }
+    
     toast({
         title: `Action: ${action}`,
         description: `An email has been sent to ${applicantName}.`
@@ -120,6 +129,9 @@ export default function ApplicantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={() => handleAction(applicant.name, 'Send Assessment')}>
+                            <Clipboard className="mr-2 h-4 w-4" /> Send Assessment
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
                             <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
                         </DropdownMenuItem>
