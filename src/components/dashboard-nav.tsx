@@ -74,6 +74,11 @@ export function DashboardNav() {
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
+              <Link href="/skill-gap">Internship Aggregator</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/assessment-center")}>
               <Link href="/assessment-center">Assessment Center</Link>
             </SidebarMenuSubButton>
@@ -182,6 +187,11 @@ export function DashboardNav() {
            <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/mobile-bot")}>
               <Link href="/mobile-bot">Mobile HR Bot</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/resume-builder")}>
+              <Link href="/resume-builder">Smart Resume Builder</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         </SidebarMenuSub>
