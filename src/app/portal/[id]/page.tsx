@@ -26,6 +26,7 @@ const allApplicants = [
   { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst", assignedTest: null },
   { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer", assignedTest: 'typing' as 'aptitude' | 'typing' | null },
   { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer", assignedTest: null },
+  { id: 8, name: "Jennifer Wilson", email: "j.wilson@example.com", status: "New", role: "Chat Support", assignedTest: 'aptitude' as 'aptitude' | 'typing' | null },
 ];
 type Applicant = typeof allApplicants[0];
 

@@ -36,9 +36,9 @@ const processResumePrompt = ai.definePrompt({
   name: 'processResumePrompt',
   input: {schema: ProcessResumeInputSchema},
   output: {schema: ProcessResumeOutputSchema},
-  prompt: `You are an expert HR data entry assistant. Your task is to extract key information from the provided resume.
+  prompt: `You are an expert HR data entry assistant specializing in processing resumes from images, which may be of poor quality (e.g., skewed, poorly lit, or containing background noise). Your task is to intelligently analyze the provided resume image, perform any necessary corrections in your interpretation to read the text accurately, and extract key information.
 
-  Analyze the resume and extract the applicant's full name, email address, phone number, and create a concise two-sentence summary of their professional profile. Also, provide the full raw text from the resume.
+  Extract the applicant's full name, email address, and phone number. Also create a concise two-sentence summary of their professional profile and provide the full, raw text you extracted from the resume.
 
   If a piece of information (like a phone number) is not available, return an empty string for that field.
 

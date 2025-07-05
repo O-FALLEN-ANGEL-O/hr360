@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { processResume } from '@/ai/flows/resume-processor';
-import { Loader2, User, Upload, Camera, Scan, Sparkles, CheckCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, User, Upload, Camera, Scan, Sparkles, CheckCircle, Send } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name is required."),
@@ -33,16 +35,30 @@ const fileToDataUri = (file: File): Promise<string> => {
 
 export function NewApplicantForm() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [newApplicantId] = useState(8); // Mock new ID
   const videoRef = useRef<HTMLVideoElement>(null);
+  const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { fullName: '', email: '', phone: '', resumeText: '' },
   });
+  
+  // Effect to redirect after submission
+  useEffect(() => {
+    if (isSubmitted) {
+      const timer = setTimeout(() => {
+        router.push(`/portal/${newApplicantId}`);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSubmitted, newApplicantId, router]);
+
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -127,19 +143,33 @@ export function NewApplicantForm() {
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     // In a real app, this would submit to a backend.
-    // For this prototype, we'll just show a success message.
-    console.log(values);
-    setIsSubmitted(true);
+    // For this prototype, we'll just show a success message after a delay.
+    console.log("Submitting new applicant:", values);
+    setTimeout(() => {
+        setIsSubmitting(false);
+        setIsSubmitted(true);
+        toast({
+            title: "Registration Complete!",
+            description: "Redirecting you to your personal applicant portal...",
+        })
+    }, 1500);
   }
 
   if (isSubmitted) {
     return (
-        <div className="text-center p-8">
-            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <h3 className="text-2xl font-bold">Registration Complete!</h3>
-            <p className="text-muted-foreground mt-2">Thank you. Please have a seat, and an HR representative will guide you to the next step shortly.</p>
-        </div>
+        <Card>
+            <CardContent className="text-center p-8 flex flex-col items-center justify-center">
+                <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+                <h3 className="text-2xl font-bold">Registration Complete!</h3>
+                <p className="text-muted-foreground mt-2">Your Applicant ID is <span className="font-mono text-primary font-bold">WALK-2024-00{newApplicantId}</span>.</p>
+                <div className="flex items-center gap-2 mt-6">
+                    <Loader2 className="h-4 w-4 animate-spin"/>
+                    <p className="text-sm text-muted-foreground">Redirecting to your portal...</p>
+                </div>
+            </CardContent>
+        </Card>
     )
   }
 
@@ -178,9 +208,9 @@ export function NewApplicantForm() {
             <FormItem><FormLabel>Resume Content (Extracted)</FormLabel><FormControl><Textarea placeholder="Resume text will appear here after processing..." rows={8} {...field} readOnly /></FormControl><FormMessage /></FormItem>
           )} />
 
-          <Button type="submit" disabled={isProcessing} className="w-full">
-            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4" />}
-            Register
+          <Button type="submit" disabled={isProcessing || isSubmitting} className="w-full">
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            {isSubmitting ? 'Submitting...' : 'Submit Registration'}
           </Button>
         </form>
       </Form>
@@ -188,9 +218,12 @@ export function NewApplicantForm() {
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Capture Resume</DialogTitle>
+                <DialogTitle>Scan Your Resume</DialogTitle>
             </DialogHeader>
-             <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted />
+             <div className='relative'>
+                <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted />
+                <div className="absolute inset-0 border-4 border-dashed border-primary/50 m-4 rounded-lg"></div>
+            </div>
             {hasCameraPermission === false && (
                 <Alert variant="destructive">
                   <AlertTitle>Camera Access Required</AlertTitle>
@@ -199,10 +232,12 @@ export function NewApplicantForm() {
                   </AlertDescription>
                 </Alert>
             )}
-            <Button onClick={handleCapture} disabled={!hasCameraPermission}>
-              <Scan className="mr-2 h-4 w-4" />
-              Capture and Process
-            </Button>
+            <DialogFooter>
+                <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+                    <Scan className="mr-2 h-4 w-4" />
+                    Capture and Process
+                </Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

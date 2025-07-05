@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Phone, Building, Briefcase, FileText, Keyboard, Loader2, Badge } from "lucide-react"
+import { User, Mail, Phone, Building, Briefcase, FileText, Keyboard, Loader2, Badge, MessageSquare, Info } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Textarea } from "@/components/ui/textarea"
 
 // In a real app, this data would be fetched from an API
 const allApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", contact: "+1234567890", college: "State University", status: "Pending Review", role: "Chat Support", aptitudeScore: "4/5", typingWPM: 75, typingAccuracy: 96, avatar: "https://placehold.co/100x100.png?text=CD", resumeSummary: "Experienced chat support specialist with a track record of high customer satisfaction scores. Proficient in Zendesk and Intercom." },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", contact: "+1987654321", college: "Ivy League College", status: "Interview Scheduled", role: "Product Manager", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=DS", resumeSummary: "Results-driven Product Manager with 5+ years of experience in agile environments. Successfully launched three major B2B SaaS products." },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", contact: "+442079460958", college: "Tech Institute", status: "Rejected", role: "Data Analyst", aptitudeScore: "2/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=EJ", resumeSummary: "Data Analyst with a strong background in SQL and Python. Lacks experience in the specific BI tools required for the role." },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", contact: "+61291112222", college: "Design School", status: "Pending Review", role: "UX Designer", aptitudeScore: "3/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=FW", resumeSummary: "Creative UX Designer focused on user-centered design principles. Portfolio showcases mobile and web application designs." },
-  { id: 5, name: "George Black", email: "george.b@example.com", contact: "+4915112345678", college: "Engineering College", status: "Offer Extended", role: "Backend Developer", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=GB", resumeSummary: "Senior Backend Developer with expertise in microservices architecture using Java and Spring Boot. Strong understanding of cloud-native development on AWS." },
-  { id: 6, name: "Hannah Lee", email: "h.lee@inbox.com", contact: "+821012345678", college: "KAIST", status: "New", role: "Data Scientist", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=HL", resumeSummary: "Recent graduate with a Master's in Data Science. Strong theoretical knowledge in machine learning and statistical modeling." },
-  { id: 7, name: "Ivan Rodriguez", email: "ivan.r@inbox.com", contact: "+34600112233", college: "Polytechnic University of Madrid", status: "New", role: "Backend Developer", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=IR", resumeSummary: "Backend developer with 2 years of experience building REST APIs with Node.js and Express. Eager to learn new technologies." },
+  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", contact: "+1234567890", college: "State University", status: "Pending Review", role: "Chat Support", aptitudeScore: "4/5", typingWPM: 75, typingAccuracy: 96, avatar: "https://placehold.co/100x100.png?text=CD", resumeSummary: "Experienced chat support specialist with a track record of high customer satisfaction scores. Proficient in Zendesk and Intercom.", source: "Email", hrNotes: "Strong candidate for the support role. Follow up on Tuesday." },
+  { id: 2, name: "Diana Smith", email: "diana.s@example.com", contact: "+1987654321", college: "Ivy League College", status: "Interview Scheduled", role: "Product Manager", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=DS", resumeSummary: "Results-driven Product Manager with 5+ years of experience in agile environments. Successfully launched three major B2B SaaS products.", source: "LinkedIn", hrNotes: "Excellent fit for PM role. Final round scheduled." },
+  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", contact: "+442079460958", college: "Tech Institute", status: "Rejected", role: "Data Analyst", aptitudeScore: "2/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=EJ", resumeSummary: "Data Analyst with a strong background in SQL and Python. Lacks experience in the specific BI tools required for the role.", source: "Naukri", hrNotes: "Does not meet requirements for BI tools. Rejecting." },
+  { id: 4, name: "Fiona White", email: "fiona.w@example.com", contact: "+61291112222", college: "Design School", status: "Pending Review", role: "UX Designer", aptitudeScore: "3/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=FW", resumeSummary: "Creative UX Designer focused on user-centered design principles. Portfolio showcases mobile and web application designs.", source: "Email", hrNotes: "" },
+  { id: 5, name: "George Black", email: "george.b@example.com", contact: "+4915112345678", college: "Engineering College", status: "Offer Extended", role: "Backend Developer", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=GB", resumeSummary: "Senior Backend Developer with expertise in microservices architecture using Java and Spring Boot. Strong understanding of cloud-native development on AWS.", source: "LinkedIn", hrNotes: "Top candidate. Offer extended." },
+  { id: 6, name: "Hannah Lee", email: "h.lee@inbox.com", contact: "+821012345678", college: "KAIST", status: "New", role: "Data Scientist", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=HL", resumeSummary: "Recent graduate with a Master's in Data Science. Strong theoretical knowledge in machine learning and statistical modeling.", source: "Email", hrNotes: "" },
+  { id: 7, name: "Ivan Rodriguez", email: "ivan.r@inbox.com", contact: "+34600112233", college: "Polytechnic University of Madrid", status: "New", role: "Backend Developer", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=IR", resumeSummary: "Backend developer with 2 years of experience building REST APIs with Node.js and Express. Eager to learn new technologies.", source: "Walk-in", hrNotes: "" },
+  { id: 8, name: "Jennifer Wilson", email: "j.wilson@example.com", contact: "+14155552671", college: "Community College", status: "New", role: "Chat Support", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=JW", resumeSummary: "Eager to start a career in customer support. Excellent communication skills demonstrated during initial screening.", source: "Walk-in", hrNotes: "Walk-in applicant from the job fair. Seems promising." },
+
 ];
 
 type Applicant = typeof allApplicants[0];
@@ -96,13 +99,23 @@ export default function ApplicantProfilePage() {
                             <InfoCard icon={<Mail className="h-4 w-4"/>} title="Email" value={applicant.email} />
                             <InfoCard icon={<Phone className="h-4 w-4"/>} title="Contact" value={applicant.contact} />
                             <InfoCard icon={<Building className="h-4 w-4"/>} title="College" value={applicant.college} />
+                            <InfoCard icon={<Info className="h-4 w-4"/>} title="Source" value={applicant.source} />
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader><CardTitle>AI Resume Summary</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent>
                            <p className="text-sm text-muted-foreground italic">{applicant.resumeSummary}</p>
                         </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5"/> HR Notes</CardTitle></CardHeader>
+                        <CardContent>
+                           <Textarea placeholder="Add internal notes about the candidate..." rows={4} defaultValue={applicant.hrNotes}/>
+                        </CardContent>
+                        <CardFooter>
+                            <Button size="sm" className="w-full">Save Notes</Button>
+                        </CardFooter>
                     </Card>
                 </div>
 
