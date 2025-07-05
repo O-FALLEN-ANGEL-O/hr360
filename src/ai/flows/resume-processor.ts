@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const ProcessResumeInputSchema = z.object({
+const ProcessResumeInputSchema = z.object({
   resumeDataUri: z
     .string()
     .describe(
@@ -19,7 +19,7 @@ export const ProcessResumeInputSchema = z.object({
 });
 export type ProcessResumeInput = z.infer<typeof ProcessResumeInputSchema>;
 
-export const ProcessResumeOutputSchema = z.object({
+const ProcessResumeOutputSchema = z.object({
   fullName: z.string().describe("The full name of the applicant."),
   email: z.string().describe("The primary email address of the applicant."),
   phone: z.string().describe("The primary phone number of the applicant."),
