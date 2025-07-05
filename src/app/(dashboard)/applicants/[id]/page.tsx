@@ -5,9 +5,8 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { PageHeader } from "@/components/page-header"
 import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Phone, Building, Briefcase, FileText, Keyboard, Loader2, Badge, MessageSquare, Info } from "lucide-react"
+import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, MessageSquare, Info } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -91,8 +90,8 @@ export default function ApplicantProfilePage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div className="md:col-span-1 space-y-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-1 space-y-6">
                     <Card>
                         <CardHeader><CardTitle>Contact Information</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
@@ -119,7 +118,7 @@ export default function ApplicantProfilePage() {
                     </Card>
                 </div>
 
-                <Card className="md:col-span-2">
+                <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Assessment Center</CardTitle>
                         <CardDescription>Performance in all assigned assessments.</CardDescription>
@@ -161,5 +160,3 @@ export default function ApplicantProfilePage() {
         </div>
     )
 }
-
-    

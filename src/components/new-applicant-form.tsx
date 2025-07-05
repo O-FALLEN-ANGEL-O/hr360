@@ -39,7 +39,7 @@ export function NewApplicantForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [newApplicantId] = useState(8); // Mock new ID
+  const [newApplicantId] = useState(8); // Mock new ID for walk-in Jennifer Wilson
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const { toast } = useToast();
@@ -124,7 +124,7 @@ export function NewApplicantForm() {
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings to use this feature.',
+        description: 'Please enable camera permissions in your browser settings.',
       });
     }
   }, [toast]);
@@ -144,15 +144,13 @@ export function NewApplicantForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // In a real app, this would submit to a backend.
-    // For this prototype, we'll just show a success message after a delay.
     console.log("Submitting new applicant:", values);
     setTimeout(() => {
         setIsSubmitting(false);
         setIsSubmitted(true);
         toast({
             title: "Registration Complete!",
-            description: "Redirecting you to your personal applicant portal...",
+            description: "Thank you for registering. Redirecting you to your personal applicant portal...",
         })
     }, 1500);
   }
@@ -162,8 +160,8 @@ export function NewApplicantForm() {
         <Card>
             <CardContent className="text-center p-8 flex flex-col items-center justify-center">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-                <h3 className="text-2xl font-bold">Registration Complete!</h3>
-                <p className="text-muted-foreground mt-2">Your Applicant ID is <span className="font-mono text-primary font-bold">WALK-2024-00{newApplicantId}</span>.</p>
+                <h3 className="text-2xl font-bold">Registration Successful!</h3>
+                <p className="text-muted-foreground mt-2">Your Applicant ID is <span className="font-mono text-primary font-bold">WALK-IN-00{newApplicantId}</span>.</p>
                 <div className="flex items-center gap-2 mt-6">
                     <Loader2 className="h-4 w-4 animate-spin"/>
                     <p className="text-sm text-muted-foreground">Redirecting to your portal...</p>

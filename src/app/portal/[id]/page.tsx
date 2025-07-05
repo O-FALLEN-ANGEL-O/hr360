@@ -131,6 +131,10 @@ export default function ApplicantPortalPage() {
     setShowNotification(false);
     setStage('typing_test');
     setIsTestRunning(true);
+    setTimeLeft(60);
+    setUserInput('');
+    setWpm(0);
+    setAccuracy(0);
   }
 
   function submitAptitudeTest(values: z.infer<typeof testSchema>) {
@@ -148,6 +152,8 @@ export default function ApplicantPortalPage() {
 
   const endTypingTest = useCallback(() => {
     setIsTestRunning(false);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
     const wordsTyped = (userInput.trim().length / 5);
     const timeElapsedMinutes = (60 - timeLeft) / 60;
     const grossWpm = timeElapsedMinutes > 0 ? Math.round(wordsTyped / timeElapsedMinutes) : 0;
@@ -208,18 +214,18 @@ export default function ApplicantPortalPage() {
             <Form {...testForm}>
               <form onSubmit={testForm.handleSubmit(submitAptitudeTest)}>
                 <CardContent className="space-y-8">
-                  {fields.map((field, index) => (
-                    <FormField
-                      key={field.id}
-                      control={testForm.control}
-                      name={`answers.${index}.answer`}
-                      render={({ field: formField }) => {
-                        const q = testData!.questions[index];
-                        return (
+                  {fields.map((field, index) => {
+                    const q = testData!.questions[index];
+                    return (
+                      <FormField
+                        key={field.id}
+                        control={testForm.control}
+                        name={`answers.${index}.answer`}
+                        render={({ field: formField }) => (
                           <FormItem className="space-y-3">
                             <FormLabel className="font-semibold">Q{index + 1}: {q.questionText}</FormLabel>
                             {q.questionImage && (
-                              <div className="my-2 p-2 border rounded-md bg-white">
+                              <div className="my-2 p-2 border rounded-md bg-white dark:bg-black">
                                 <Image src={q.questionImage} alt={`Puzzle for Q${index+1}`} width={300} height={200} className="rounded-md mx-auto" data-ai-hint="puzzle diagram" />
                               </div>
                             )}
@@ -235,10 +241,10 @@ export default function ApplicantPortalPage() {
                             </FormControl>
                             <FormMessage />
                           </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
+                        )}
+                      />
+                    );
+                  })}
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full">
@@ -280,8 +286,11 @@ export default function ApplicantPortalPage() {
                     <textarea
                         className="w-full h-48 mt-4 p-4 rounded-md border text-lg leading-relaxed font-mono tracking-wider focus:ring-2 focus:ring-primary"
                         value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        disabled={!isTestRunning}
+                        onChange={(e) => {
+                           if (!isTestRunning) setIsTestRunning(true);
+                           setUserInput(e.target.value);
+                        }}
+                        disabled={!isTestRunning && timeLeft <= 0}
                         autoFocus
                     />
                 </CardContent>
