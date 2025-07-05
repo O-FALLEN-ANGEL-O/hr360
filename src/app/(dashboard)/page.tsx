@@ -7,7 +7,6 @@ import {
   PieChart,
   TrendingUp,
   Target,
-  Smile,
   CheckCircle
 } from "lucide-react"
 import {

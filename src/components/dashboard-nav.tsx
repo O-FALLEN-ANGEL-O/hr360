@@ -59,6 +59,11 @@ export function DashboardNav() {
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/job-archive")}>
+              <Link href="/job-archive">Job Archive</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/match-score")}>
               <Link href="/match-score">GPT Match Score</Link>
             </SidebarMenuSubButton>
@@ -138,6 +143,11 @@ export function DashboardNav() {
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/document-generator")}>
               <Link href="/document-generator">Document Generator</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/ai-responder")}>
+              <Link href="/ai-responder">AI Email Responder</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
