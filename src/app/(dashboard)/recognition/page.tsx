@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Trophy, Gift, Sparkles } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const leaderboard = [
   { name: "Diana Smith", points: 2500, avatar: "https://placehold.co/100x100.png?text=DS" },
@@ -24,10 +25,10 @@ const recentKudos = [
 ]
 
 const rewards = [
-    { name: "Company Swag Pack", cost: 500, icon: <Gift className="h-6 w-6 text-blue-500" /> },
-    { name: "Half-day off", cost: 1000, icon: <Gift className="h-6 w-6 text-green-500" /> },
-    { name: "Team Lunch Voucher", cost: 1500, icon: <Gift className="h-6 w-6 text-yellow-500" /> },
-    { name: "Professional Development Fund", cost: 3000, icon: <Gift className="h-6 w-6 text-purple-500" /> },
+    { name: "Company Swag Pack", cost: 500, iconColor: "text-blue-500" },
+    { name: "Half-day off", cost: 1000, iconColor: "text-green-500" },
+    { name: "Team Lunch Voucher", cost: 1500, iconColor: "text-yellow-500" },
+    { name: "Professional Development Fund", cost: 3000, iconColor: "text-purple-500" },
 ]
 
 export default function RecognitionPage() {
@@ -98,7 +99,9 @@ export default function RecognitionPage() {
                 <CardContent className="grid grid-cols-2 gap-4">
                      {rewards.map((reward, index) => (
                         <div key={index} className="p-4 rounded-lg border text-center space-y-2">
-                            <div className="flex justify-center">{reward.icon}</div>
+                            <div className="flex justify-center">
+                                <Gift className={cn("h-6 w-6", reward.iconColor)} />
+                            </div>
                             <p className="font-semibold">{reward.name}</p>
                             <Badge variant="outline">{reward.cost.toLocaleString()} pts</Badge>
                             <Button size="sm" className="w-full">Redeem</Button>

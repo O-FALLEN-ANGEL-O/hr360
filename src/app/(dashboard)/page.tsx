@@ -39,6 +39,8 @@ import {
   BarChart as RechartsBarChart,
   PieChart as RechartsPieChart,
 } from "recharts"
+import { useEffect, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const applications = [
   {
@@ -115,8 +117,13 @@ const StatCard = ({ title, value, icon, description }: { title: string; value: s
     </Card>
 );
 
-
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
   return (
     <div className="space-y-8">
       <PageHeader title="HR Dashboard" description="An overview of key metrics for the organization." />
@@ -137,6 +144,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-64">
+            {!mounted ? <Skeleton className="h-full w-full" /> :
              <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                     <Tooltip
@@ -154,6 +162,7 @@ export default function DashboardPage() {
                     </Pie>
                 </RechartsPieChart>
              </ResponsiveContainer>
+            }
           </CardContent>
         </Card>
         <Card>
@@ -164,6 +173,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-64">
+            {!mounted ? <Skeleton className="h-full w-full" /> :
             <ResponsiveContainer width="100%" height="100%">
                 <RechartsBarChart data={pipelineData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -179,6 +189,7 @@ export default function DashboardPage() {
                     <Bar dataKey="value" radius={[4, 4, 0, 0]} />
                 </RechartsBarChart>
             </ResponsiveContainer>
+            }
           </CardContent>
         </Card>
       </div>

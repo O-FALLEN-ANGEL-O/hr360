@@ -4,7 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Bot, FileText, Loader2, User, Sparkles, ThumbsUp, ThumbsDown, AlertTriangle } from "lucide-react";
+import { Bot, FileText, Loader2, User, Sparkles, ThumbsUp, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

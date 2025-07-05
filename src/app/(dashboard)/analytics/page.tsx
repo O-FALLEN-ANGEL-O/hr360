@@ -2,12 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Loader2, TrendingUp, Flame, DollarSign, Lightbulb, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePredictiveAnalyticsDashboard, type PredictiveAnalyticsDashboardOutput } from "@/ai/flows/predictive-analytics-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const AnalyticsCard = ({ icon, title, isLoading, children }: { icon: React.ReactNode, title: string, isLoading: boolean, children: React.ReactNode }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+          <div className="p-3 rounded-full bg-primary/10 text-primary">{icon}</div>
+          <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+          {isLoading ? <Skeleton className="h-24 w-full" /> : <p className="text-sm text-muted-foreground">{children}</p>}
+      </CardContent>
+  </Card>
+);
 
 export default function AnalyticsPage() {
   const [result, setResult] = useState<PredictiveAnalyticsDashboardOutput | null>(null);
@@ -15,10 +27,14 @@ export default function AnalyticsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
-  const fetchAnalytics = useCallback(async () => {
-    if (!isLoading) setIsRefreshing(true);
+  const fetchAnalytics = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+    
     try {
-      // Mock data for the flow input
       const mockInput = {
         companyData: "Aggregated data: 500 employees, avg tenure 3.5 yrs, 15% turnover last year. Performance reviews avg 3.8/5. Sales dept shows highest exit rate.",
         industryBenchmarks: "Industry avg attrition is 18%. Salary for developers is benchmarked at $120k.",
@@ -26,7 +42,7 @@ export default function AnalyticsPage() {
       };
       const response = await generatePredictiveAnalyticsDashboard(mockInput);
       setResult(response);
-       if (!isLoading) {
+      if (isRefresh) {
          toast({
             title: "Analytics Refreshed!",
             description: "The latest predictive insights have been loaded.",
@@ -43,23 +59,11 @@ export default function AnalyticsPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [isLoading, toast]);
+  }, [toast]);
 
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
-
-  const AnalyticsCard = ({ icon, title, children }: { icon: React.ReactNode, title: string, children: React.ReactNode }) => (
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-            <div className="p-3 rounded-full bg-primary/10 text-primary">{icon}</div>
-            <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            {isLoading ? <Skeleton className="h-24 w-full" /> : <p className="text-sm text-muted-foreground">{children}</p>}
-        </CardContent>
-    </Card>
-  );
 
   return (
     <div className="space-y-8">
@@ -68,26 +72,26 @@ export default function AnalyticsPage() {
           title="Predictive Analytics Dashboard"
           description="AI-driven insights on attrition, burnout, and salary benchmarks."
         />
-        <Button variant="outline" onClick={() => fetchAnalytics()} disabled={isRefreshing || isLoading}>
+        <Button variant="outline" onClick={() => fetchAnalytics(true)} disabled={isRefreshing || isLoading}>
             {isRefreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Refresh
         </Button>
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-        <AnalyticsCard icon={<TrendingUp />} title="Attrition Prediction">
+        <AnalyticsCard icon={<TrendingUp />} title="Attrition Prediction" isLoading={isLoading}>
             {result?.attritionPrediction}
         </AnalyticsCard>
 
-        <AnalyticsCard icon={<Flame />} title="Burnout Heatmap">
+        <AnalyticsCard icon={<Flame />} title="Burnout Heatmap" isLoading={isLoading}>
             {result?.burnoutHeatmap}
         </AnalyticsCard>
 
-        <AnalyticsCard icon={<DollarSign />} title="Salary Benchmarks">
+        <AnalyticsCard icon={<DollarSign />} title="Salary Benchmarks" isLoading={isLoading}>
             {result?.salaryBenchmarks}
         </AnalyticsCard>
 
-        <AnalyticsCard icon={<Lightbulb />} title="Key Insights & Recommendations">
+        <AnalyticsCard icon={<Lightbulb />} title="Key Insights & Recommendations" isLoading={isLoading}>
             {result?.keyInsights}
         </AnalyticsCard>
       </div>

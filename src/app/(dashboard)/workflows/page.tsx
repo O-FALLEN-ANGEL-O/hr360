@@ -7,7 +7,7 @@ import { z } from "zod"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle, BellRing, Hourglass } from "lucide-react"
+import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle, BellRing, Hourglass, type LucideIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -27,49 +27,66 @@ const workflowSchema = z.object({
   description: z.string().min(10, "Description is required."),
 })
 
+type IconName = "UserPlus" | "UserX" | "Clock" | "Mail" | "Check" | "Hourglass" | "BellRing" | "PlusCircle";
+
+const iconMap: { [key in IconName]: LucideIcon } = {
+  UserPlus,
+  UserX,
+  Clock,
+  Mail,
+  Check,
+  Hourglass,
+  BellRing,
+  PlusCircle,
+};
+
 const initialWorkflows = [
   {
     title: "New Employee Onboarding",
-    icon: <UserPlus className="h-8 w-8 text-green-500" />,
+    icon: "UserPlus" as const,
+    iconColor: "text-green-500",
     description: "Automated workflow for welcoming new hires, from offer acceptance to first-day setup.",
     steps: [
-      { name: "Send Welcome Email", icon: <Mail className="text-blue-500" />, done: true },
-      { name: "IT Equipment Provisioning", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Create System Accounts", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Schedule Orientation", icon: <Check className="text-green-500" />, done: true },
+      { name: "Send Welcome Email", icon: "Mail" as const, done: true },
+      { name: "IT Equipment Provisioning", icon: "Clock" as const, done: false },
+      { name: "Create System Accounts", icon: "Clock" as const, done: false },
+      { name: "Schedule Orientation", icon: "Check" as const, done: true },
     ]
   },
-    {
+  {
     title: "48-Hour Resume Reminder",
-    icon: <Hourglass className="h-8 w-8 text-blue-500" />,
+    icon: "Hourglass" as const,
+    iconColor: "text-blue-500",
     description: "If a resume is unseen for 48 hours, this workflow sends an apology and alerts HR.",
     steps: [
-      { name: "Monitor Unseen Resumes", icon: <Check className="text-green-500" />, done: true },
-      { name: "Trigger After 48 Hours", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Send Auto-Apology Email", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Alert HR Team", icon: <BellRing className="text-red-500" />, done: false },
+      { name: "Monitor Unseen Resumes", icon: "Check" as const, done: true },
+      { name: "Trigger After 48 Hours", icon: "Clock" as const, done: false },
+      { name: "Send Auto-Apology Email", icon: "Clock" as const, done: false },
+      { name: "Alert HR Team", icon: "BellRing" as const, done: false },
     ]
   },
   {
     title: "Employee Offboarding",
-    icon: <UserX className="h-8 w-8 text-red-500" />,
+    icon: "UserX" as const,
+    iconColor: "text-red-500",
     description: "A streamlined process for employee exits, ensuring all assets are recovered and access is revoked.",
     steps: [
-      { name: "Conduct Exit Interview", icon: <Check className="text-green-500" />, done: true },
-      { name: "Deactivate Accounts", icon: <Check className="text-green-500" />, done: true },
-      { name: "Final Payroll Processing", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Collect Company Assets", icon: <Clock className="text-yellow-500" />, done: false },
+      { name: "Conduct Exit Interview", icon: "Check" as const, done: true },
+      { name: "Deactivate Accounts", icon: "Check" as const, done: true },
+      { name: "Final Payroll Processing", icon: "Clock" as const, done: false },
+      { name: "Collect Company Assets", icon: "Clock" as const, done: false },
     ]
   },
   {
     title: "Leave Approval Process",
-    icon: <Clock className="h-8 w-8 text-blue-500" />,
+    icon: "Clock" as const,
+    iconColor: "text-blue-500",
     description: "A multi-step approval workflow for employee leave requests.",
     steps: [
-      { name: "Employee Submits Request", icon: <Check className="text-green-500" />, done: true },
-      { name: "Manager Approval", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "HR Confirmation", icon: <Clock className="text-yellow-500" />, done: false },
-      { name: "Update Calendar", icon: <Clock className="text-yellow-500" />, done: false },
+      { name: "Employee Submits Request", icon: "Check" as const, done: true },
+      { name: "Manager Approval", icon: "Clock" as const, done: false },
+      { name: "HR Confirmation", icon: "Clock" as const, done: false },
+      { name: "Update Calendar", icon: "Clock" as const, done: false },
     ]
   }
 ];
@@ -93,11 +110,12 @@ export default function WorkflowsPage() {
     const newWorkflow: Workflow = {
       title: values.title,
       description: values.description,
-      icon: <PlusCircle className="h-8 w-8 text-gray-500" />, // Default icon for new workflows
+      icon: "PlusCircle",
+      iconColor: "text-gray-500",
       steps: [
-        { name: "Step 1: Define", icon: <Clock className="text-yellow-500" />, done: false },
-        { name: "Step 2: Assign", icon: <Clock className="text-yellow-500" />, done: false },
-        { name: "Step 3: Activate", icon: <Clock className="text-yellow-500" />, done: false },
+        { name: "Step 1: Define", icon: "Clock", done: false },
+        { name: "Step 2: Assign", icon: "Clock", done: false },
+        { name: "Step 3: Activate", icon: "Clock", done: false },
       ]
     };
     setWorkflows(prev => [...prev, newWorkflow]);
@@ -163,34 +181,42 @@ export default function WorkflowsPage() {
         </Dialog>
       </div>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-        {workflows.map((workflow, index) => (
-          <Card key={index} className="flex flex-col">
-            <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-              <div className="flex-shrink-0">{workflow.icon}</div>
-              <div className="flex-grow">
-                <CardTitle>{workflow.title}</CardTitle>
-                <CardDescription className="mt-1">{workflow.description}</CardDescription>
+        {workflows.map((workflow, index) => {
+           const MainIcon = iconMap[workflow.icon];
+           return (
+            <Card key={index} className="flex flex-col">
+              <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+                <div className="flex-shrink-0">
+                    <MainIcon className={`h-8 w-8 ${workflow.iconColor}`} />
+                </div>
+                <div className="flex-grow">
+                  <CardTitle>{workflow.title}</CardTitle>
+                  <CardDescription className="mt-1">{workflow.description}</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <ul className="space-y-3">
+                  {workflow.steps.map((step, stepIndex) => {
+                    const StepIcon = iconMap[step.icon];
+                    return (
+                        <li key={stepIndex} className="flex items-center gap-3">
+                            <div className={`flex h-6 w-6 items-center justify-center rounded-full ${step.done ? "bg-green-100" : "bg-yellow-100"}`}>
+                                <StepIcon className={`h-4 w-4 ${step.done ? "text-green-600" : "text-yellow-600"}`} />
+                            </div>
+                            <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : ""}`}>{step.name}</span>
+                        </li>
+                    )
+                  })}
+                </ul>
+              </CardContent>
+              <div className="border-t p-4">
+                <Button variant="outline" className="w-full">
+                  View Details <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <ul className="space-y-3">
-                {workflow.steps.map((step, stepIndex) => (
-                  <li key={stepIndex} className="flex items-center gap-3">
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full ${step.done ? "bg-green-100" : "bg-yellow-100"}`}>
-                        {step.done ? <Check className="h-4 w-4 text-green-600" /> : <Clock className="h-4 w-4 text-yellow-600" />}
-                    </div>
-                    <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : ""}`}>{step.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <div className="border-t p-4">
-              <Button variant="outline" className="w-full">
-                View Details <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+           )
+        })}
       </div>
     </div>
   );
