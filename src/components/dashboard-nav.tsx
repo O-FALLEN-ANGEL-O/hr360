@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -102,6 +103,20 @@ export function DashboardNav() {
           </SidebarMenuSubItem>
         </SidebarMenuSub>
       </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton>
+          <GanttChartSquare />
+          Talent Development
+        </SidebarMenuButton>
+        <SidebarMenuSub>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
+              <Link href="/skill-gap">Skill Gap Map</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        </SidebarMenuSub>
+      </SidebarMenuItem>
       
       <SidebarMenuItem>
         <SidebarMenuButton>
@@ -146,6 +161,11 @@ export function DashboardNav() {
            <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/mobile-bot")}>
               <Link href="/mobile-bot">Mobile HR Bot</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/ai-responder")}>
+                <Link href="/ai-responder">AI Email Responder</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         </SidebarMenuSub>

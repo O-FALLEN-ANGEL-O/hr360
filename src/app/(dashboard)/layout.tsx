@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,7 +11,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DashboardNav } from "@/components/dashboard-nav"
-import { Building, LogOut, Settings } from "lucide-react"
+import { Bot, LogOut, Settings } from "lucide-react"
 
 export default function DashboardLayout({
   children,
@@ -22,7 +23,7 @@ export default function DashboardLayout({
       <Sidebar>
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-3">
-            <Building className="size-8 text-primary" />
+            <Bot className="size-8 text-primary" />
             <div className="flex flex-col">
               <h2 className="text-lg font-semibold">HR360+</h2>
               <p className="text-xs text-muted-foreground">

@@ -1,8 +1,11 @@
+
+"use client"
+
 import {
-  Activity,
-  Briefcase,
   Users,
-  ShieldCheck,
+  Briefcase,
+  BarChart,
+  PieChart
 } from "lucide-react"
 import {
   Card,
@@ -21,6 +24,19 @@ import {
 } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
+import {
+  Bar,
+  CartesianGrid,
+  Cell,
+  Pie,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  BarChart as RechartsBarChart,
+  PieChart as RechartsPieChart,
+} from "recharts"
 
 const applications = [
   {
@@ -67,60 +83,79 @@ const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "des
   Hired: "default"
 };
 
+const departmentData = [
+    { name: 'Engineering', value: 450, color: 'hsl(var(--chart-1))' },
+    { name: 'Sales', value: 250, color: 'hsl(var(--chart-2))' },
+    { name: 'Marketing', value: 180, color: 'hsl(var(--chart-3))' },
+    { name: 'HR', value: 80, color: 'hsl(var(--chart-4))' },
+    { name: 'Support', value: 320, color: 'hsl(var(--chart-5))' },
+    { name: 'Other', value: 143, color: 'hsl(var(--muted))' }
+];
+
+const pipelineData = [
+    { name: 'Applied', value: 250, fill: 'hsl(var(--chart-1))' },
+    { name: 'Screening', value: 180, fill: 'hsl(var(--chart-2))' },
+    { name: 'Interview', value: 95, fill: 'hsl(var(--chart-3))' },
+    { name: 'Offer', value: 35, fill: 'hsl(var(--chart-4))' },
+    { name: 'Hired', value: 15, fill: 'hsl(var(--chart-5))' }
+];
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader title="HR Dashboard" description="An overview of key metrics for the organization." />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Employees
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-muted-foreground" />
+              Employee Distribution by Department
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,423</div>
-            <p className="text-xs text-muted-foreground">
-              +1.5% from last month
-            </p>
+          <CardContent className="h-64">
+             <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                    <Tooltip
+                        cursor={false}
+                        contentStyle={{
+                            background: "hsl(var(--background))",
+                            borderColor: "hsl(var(--border))",
+                            borderRadius: "var(--radius)"
+                        }}
+                    />
+                    <Pie data={departmentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        {departmentData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                    </Pie>
+                    <Legend />
+                </RechartsPieChart>
+             </ResponsiveContainer>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Quarterly Attrition
+          <CardHeader>
+             <CardTitle className="flex items-center gap-2">
+              <BarChart className="h-5 w-5 text-muted-foreground" />
+              Hiring Pipeline Overview
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2.1%</div>
-            <p className="text-xs text-muted-foreground">
-              Slightly above target
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">35</div>
-            <p className="text-xs text-muted-foreground">+2 since last hour</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Compliance Rate
-            </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">98.5%</div>
-            <p className="text-xs text-muted-foreground">All trainings up to date</p>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={pipelineData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                        contentStyle={{
+                            background: "hsl(var(--background))",
+                            borderColor: "hsl(var(--border))",
+                            borderRadius: "var(--radius)"
+                        }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                </RechartsBarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -9,7 +10,7 @@ const inter = Inter({
   variable: '--font-sans',
 });
 
-const appIcon = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%233399FF" /><text x="16" y="16" font-size="16" fill="white" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-weight="bold">HR</text></svg>`;
+const appIcon = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%233399FF" /><text x="50" y="55" font-size="50" fill="white" text-anchor="middle" dominant-baseline="middle" font-family="Inter, sans-serif" font-weight="bold">HR</text></svg>`;
 
 export const metadata: Metadata = {
   title: 'HR360+',
@@ -25,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
         {children}
         <Toaster />
       </body>
