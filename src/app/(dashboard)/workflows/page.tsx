@@ -56,14 +56,14 @@ const initialWorkflows = [
     ]
   },
   {
-    title: "48-Hour Resume Reminder",
+    title: "48-Hour Unseen Resume Alert",
     icon: "Hourglass" as const,
     iconColor: "text-blue-500",
     description: "If a resume is unseen for 48 hours, this workflow sends an apology and alerts HR.",
     steps: [
       { name: "Monitor Unseen Resumes", icon: "Check" as const, done: true },
       { name: "Trigger After 48 Hours", icon: "Clock" as const, done: false },
-      { name: "Send Auto-Apology Email", icon: "Clock" as const, done: false },
+      { name: "Send Auto-Apology Email", icon: "Mail" as const, done: false },
       { name: "Alert HR Team", icon: "BellRing" as const, done: false },
     ]
   },
@@ -82,7 +82,7 @@ const initialWorkflows = [
   {
     title: "Leave Approval Process",
     icon: "Clock" as const,
-    iconColor: "text-blue-500",
+    iconColor: "text-yellow-500",
     description: "A multi-step approval workflow for employee leave requests.",
     steps: [
       { name: "Employee Submits Request", icon: "Check" as const, done: true },

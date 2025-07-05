@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
 import { useToast } from "@/hooks/use-toast"
@@ -18,19 +17,13 @@ import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const formSchema = z.object({
-  jobDescription: z.string().min(50, { message: "Job description must be at least 50 characters." }),
-  resume: z.string().min(50, { message: "Resume content must be at least 50 characters." }),
-  coverLetter: z.string().optional(),
-  companyName: z.string().min(2, { message: "Company name is required." }),
+  applicantName: z.string().min(2, { message: "Applicant name is required." }),
   jobTitle: z.string().min(2, { message: "Job title is required." }),
   recipientEmail: z.string().email(),
-  senderName: z.string().min(2, { message: "Your name is required." }),
-  senderEmail: z.string().email({ message: "A valid sender email is required."}),
-  customSignature: z.string().min(10, { message: "A signature is required." }),
-  tone: z.enum(['Formal', 'Enthusiastic', 'Concise']),
+  communicationContext: z.enum(['Invitation to Interview', 'Polite Rejection', 'Request for Information']),
 })
 
-export default function AiEmailResponderPage() {
+export default function AiEmailComposerPage() {
   const [generatedEmail, setGeneratedEmail] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState(0)
@@ -40,21 +33,15 @@ export default function AiEmailResponderPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      jobDescription: "",
-      resume: "",
-      coverLetter: "",
-      companyName: "",
+      applicantName: "",
       jobTitle: "",
       recipientEmail: "",
-      senderName: "",
-      senderEmail: "",
-      customSignature: "Best regards,\n[Your Name]",
-      tone: "Formal",
+      communicationContext: "Invitation to Interview",
     },
   })
 
   const startProgress = () => {
-    const DURATION = 15; // Approximate seconds for generation
+    const DURATION = 10; // Approximate seconds for generation
     const intervalTime = (DURATION * 1000) / 100;
     intervalRef.current = setInterval(() => {
         setProgress(prev => {
@@ -82,11 +69,11 @@ export default function AiEmailResponderPage() {
     try {
       const result = await aiEmailResponder({
         ...values,
-        coverLetter: values.coverLetter || "",
+        companyName: "HR360+ Platform Inc.", // This would typically come from company settings
       })
       setGeneratedEmail(result.emailContent)
       toast({
-        title: "Email Generated!",
+        title: "Email Drafted!",
         description: "Your personalized email has been successfully created.",
       });
     } catch (error) {
@@ -113,110 +100,35 @@ export default function AiEmailResponderPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="AI Email Responder"
-        description="Auto-generate personalized emails tailored by role and job, including your resume and custom signature."
+        title="AI Email Composer"
+        description="Draft professional emails to candidates for various scenarios in seconds."
       />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Applicant Details</CardTitle>
-            <CardDescription>Fill in the details to generate a personalized email.</CardDescription>
+            <CardTitle>Communication Details</CardTitle>
+            <CardDescription>Fill in the details to generate a professional email draft.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="jobTitle"
+                  name="applicantName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Job Title</FormLabel>
-                      <FormControl><Input placeholder="e.g., Senior Frontend Developer" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="companyName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Name</FormLabel>
-                      <FormControl><Input placeholder="e.g., Acme Inc." {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="recipientEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recipient Email</FormLabel>
-                      <FormControl><Input type="email" placeholder="e.g., hr@acme.com" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tone of Voice</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select a tone" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Formal">Formal</SelectItem>
-                            <SelectItem value="Enthusiastic">Enthusiastic</SelectItem>
-                            <SelectItem value="Concise">Concise</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="jobDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Job Description</FormLabel>
-                      <FormControl><Textarea placeholder="Paste the job description here..." rows={6} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="resume"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Your Resume</FormLabel>
-                      <FormControl><Textarea placeholder="Paste your resume content here..." rows={6} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="senderName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Your Name</FormLabel>
+                      <FormLabel>Applicant Name</FormLabel>
                       <FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="senderEmail"
+                  name="recipientEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Your Email</FormLabel>
+                      <FormLabel>Applicant Email</FormLabel>
                       <FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -224,25 +136,46 @@ export default function AiEmailResponderPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="customSignature"
+                  name="jobTitle"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Custom Signature</FormLabel>
-                      <FormControl><Textarea rows={3} {...field} /></FormControl>
+                      <FormLabel>Job Title Applied For</FormLabel>
+                      <FormControl><Input placeholder="e.g., Senior Frontend Developer" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="communicationContext"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Communication Context</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select a context" /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Invitation to Interview">Invitation to Interview</SelectItem>
+                            <SelectItem value="Polite Rejection">Polite Rejection</SelectItem>
+                            <SelectItem value="Request for Information">Request for Information</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
+                      Drafting...
                     </>
                   ) : (
                     <>
                       <Bot className="mr-2 h-4 w-4" />
-                      Generate Email
+                      Generate Email Draft
                     </>
                   )}
                 </Button>
@@ -254,7 +187,7 @@ export default function AiEmailResponderPage() {
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
-                <CardTitle>Generated Email</CardTitle>
+                <CardTitle>Generated Email Draft</CardTitle>
                 <CardDescription>Review the AI-generated email below.</CardDescription>
             </div>
             <Button variant="outline" size="icon" onClick={handleCopyToClipboard} disabled={!generatedEmail || isLoading}>
@@ -266,9 +199,9 @@ export default function AiEmailResponderPage() {
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-center space-y-4 w-4/5">
                     <Bot className="mx-auto h-12 w-12 text-muted-foreground animate-pulse" />
-                    <p className="text-muted-foreground">AI is crafting your email... ({Math.round(progress)}%)</p>
+                    <p className="text-muted-foreground">AI is drafting your email... ({Math.round(progress)}%)</p>
                     <Progress value={progress} className="w-full" />
-                    <p className="text-xs text-muted-foreground">This should take about 15 seconds.</p>
+                    <p className="text-xs text-muted-foreground">This should take about 10 seconds.</p>
                 </div>
               </div>
             )}

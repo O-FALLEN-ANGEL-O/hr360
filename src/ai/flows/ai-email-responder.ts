@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for automatically sending personalized emails to potential employers.
+ * @fileOverview This file defines a Genkit flow for an AI assistant that helps HR managers compose professional emails to candidates.
  *
- * - aiEmailResponder - A function that triggers the email sending flow.
+ * - aiEmailResponder - A function that triggers the email composition flow.
  * - AiEmailResponderInput - The input type for the aiEmailResponder function.
  * - AiEmailResponderOutput - The return type for the aiEmailResponder function.
  */
@@ -12,60 +12,56 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AiEmailResponderInputSchema = z.object({
-  jobDescription: z.string().describe('The full job description of the position.'),
-  resume: z.string().describe('The applicant\'s resume text.'),
-  coverLetter: z.string().describe('The applicant\'s cover letter text.'),
-  companyName: z.string().describe('The name of the company.'),
+  applicantName: z.string().describe("The name of the job applicant."),
   jobTitle: z.string().describe('The title of the job being applied for.'),
-  recipientEmail: z.string().email().describe('The email address of the recipient.'),
-  senderName: z.string().describe('The name of the sender.'),
-  senderEmail: z.string().email().describe('The email address of the sender.'),
-  customSignature: z.string().describe('The custom email signature to include.'),
-  tone: z.enum(['Formal', 'Enthusiastic', 'Concise']).describe('The desired tone for the email.'),
+  companyName: z.string().describe('The name of the company.'),
+  recipientEmail: z.string().email().describe('The email address of the applicant.'),
+  communicationContext: z.enum(['Invitation to Interview', 'Polite Rejection', 'Request for Information']).describe('The context of the communication.'),
 });
 
 export type AiEmailResponderInput = z.infer<typeof AiEmailResponderInputSchema>;
 
 const AiEmailResponderOutputSchema = z.object({
-  emailContent: z.string().describe('The complete content of the email to be sent.'),
+  emailContent: z.string().describe('The complete content of the email to be sent, including a subject line.'),
 });
 
 export type AiEmailResponderOutput = z.infer<typeof AiEmailResponderOutputSchema>;
 
 export async function aiEmailResponder(input: AiEmailResponderInput): Promise<AiEmailResponderOutput> {
-  return aiEmailResponderFlow(input);
+  return aiEmailComposerFlow(input);
 }
 
-const aiEmailResponderPrompt = ai.definePrompt({
-  name: 'aiEmailResponderPrompt',
+const aiEmailComposerPrompt = ai.definePrompt({
+  name: 'aiEmailComposerPrompt',
   input: {schema: AiEmailResponderInputSchema},
   output: {schema: AiEmailResponderOutputSchema},
-  prompt: `You are an AI-powered email assistant designed to craft personalized emails to potential employers.
+  prompt: `You are an expert HR communications assistant for a major multinational corporation, "{{companyName}}". Your task is to draft a professional, clear, and empathetic email to a job applicant.
 
-  Given the job description, resume, and cover letter, create a compelling and tailored email that increases the chances of the applicant getting an interview. The email should include a custom signature at the end. 
-  
-  Please adopt a {{{tone}}} tone for this email.
+The email should be tailored to the specific context provided.
 
-  Job Description: {{{jobDescription}}}
-  Resume: {{{resume}}}
-  Cover Letter: {{{coverLetter}}}
-  Company Name: {{{companyName}}}
-  Job Title: {{{jobTitle}}}
-  Sender Name: {{{senderName}}}
-  Custom Signature: {{{customSignature}}}
+Context for the email: {{{communicationContext}}}
 
-  Please generate the full email content, including a subject line.
-  `,
+Applicant Details:
+- Name: {{{applicantName}}}
+- Applied for: {{{jobTitle}}}
+- Recipient Email: {{{recipientEmail}}}
+
+Based on the context, please generate the full email content, including an appropriate subject line.
+
+- If the context is 'Invitation to Interview', the email should be enthusiastic and clear, suggesting next steps for scheduling.
+- If the context is 'Polite Rejection', the email must be empathetic and respectful, thanking the applicant for their interest and time, while clearly stating that they will not be moving forward in the process. Do not give false hope.
+- If the context is 'Request for Information', clearly state what additional information is needed from the applicant.
+`,
 });
 
-const aiEmailResponderFlow = ai.defineFlow(
+const aiEmailComposerFlow = ai.defineFlow(
   {
-    name: 'aiEmailResponderFlow',
+    name: 'aiEmailComposerFlow',
     inputSchema: AiEmailResponderInputSchema,
     outputSchema: AiEmailResponderOutputSchema,
   },
   async input => {
-    const {output} = await aiEmailResponderPrompt(input);
+    const {output} = await aiEmailComposerPrompt(input);
     return output!;
   }
 );
