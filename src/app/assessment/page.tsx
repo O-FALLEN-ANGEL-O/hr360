@@ -31,6 +31,7 @@ const testSchema = z.object({
 });
 
 type Stage = 'info' | 'selection' | 'testing' | 'results';
+type TestTopic = "English" | "Logical" | "Comprehensive";
 
 const TestTypeCard = ({ icon, title, description, onSelect }: { icon: React.ReactNode, title: string, description: string, onSelect: () => void }) => (
     <button onClick={onSelect} className="w-full text-left">
@@ -80,7 +81,7 @@ export default function AssessmentPage() {
     setStage('selection');
   }
 
-  async function onStartTest(topic: "English" | "Logical" | "Tech" | "Comprehensive") {
+  async function onStartTest(topic: TestTopic) {
     setIsLoading(true);
     try {
       const test = await generateAptitudeTest({
@@ -181,12 +182,9 @@ export default function AssessmentPage() {
                 <CardContent className="space-y-4">
                     {isLoading ? <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div> :
                     <>
-                        <TestTypeCard icon={<BookOpen className="h-8 w-8 text-blue-500" />} title="English Test" description="Assess your language and comprehension skills." onSelect={() => onStartTest('English')} />
-                        <TestTypeCard icon={<BrainCircuit className="h-8 w-8 text-purple-500" />} title="Logical Reasoning Test" description="Challenge your problem-solving abilities." onSelect={() => onStartTest('Logical')} />
+                        <TestTypeCard icon={<BookOpen className="h-8 w-8 text-blue-500" />} title="English Proficiency Test" description="Assess your language and comprehension skills." onSelect={() => onStartTest('English')} />
+                        <TestTypeCard icon={<BrainCircuit className="h-8 w-8 text-purple-500" />} title="Logical Reasoning Test" description="Challenge your problem-solving and pattern-recognition abilities." onSelect={() => onStartTest('Logical')} />
                         <TestTypeCard icon={<PencilRuler className="h-8 w-8 text-green-500" />} title="Comprehensive Test" description="A mix of logical, verbal, and puzzle-based questions." onSelect={() => onStartTest('Comprehensive')} />
-                        {role?.toLowerCase().includes("developer") || role?.toLowerCase().includes("engineer") && (
-                            <TestTypeCard icon={<PencilRuler className="h-8 w-8 text-orange-500" />} title="Technical Test" description="A test focused on technical skills for your role." onSelect={() => onStartTest('Tech')} />
-                        )}
                     </>
                     }
                 </CardContent>

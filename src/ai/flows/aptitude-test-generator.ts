@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Generates aptitude tests (Logical, Tech, English, Comprehensive) with cheating prevention, auto-scoring, and feedback.
+ * @fileOverview Generates aptitude tests (Logical, English, Comprehensive) with cheating prevention, auto-scoring, and feedback.
  * This version supports role-based questions and picture puzzles.
  *
  * - generateAptitudeTest - A function that generates the aptitude test.
@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AptitudeTestInputSchema = z.object({
-  topic: z.enum(['Logical', 'Tech', 'English', 'Comprehensive']).describe('The topic of the aptitude test.'),
+  topic: z.enum(['Logical', 'English', 'Comprehensive']).describe('The topic of the aptitude test.'),
   role: z.string().optional().describe('The job role the test is for, to generate role-specific questions.'),
   numQuestions: z.number().int().min(5).max(20).describe('The number of questions to generate.'),
   timeLimitMinutes: z.number().int().min(5).max(60).describe('The time limit for the test in minutes.'),

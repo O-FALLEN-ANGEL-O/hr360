@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   Table,
   TableBody,
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, Mail, Check, X, CalendarPlus, Clipboard } from "lucide-react"
+import { MoreHorizontal, Mail, Check, X, CalendarPlus, Clipboard, User, FileText, Keyboard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,11 +25,11 @@ import {
 import { useToast } from "@/hooks/use-toast"
 
 const initialApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", testScore: "4/5", status: "Pending Review", role: "Software Engineer" },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", testScore: "5/5", status: "Interview Scheduled", role: "Product Manager" },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", testScore: "2/5", status: "Rejected", role: "Data Analyst" },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", testScore: "3/5", status: "Pending Review", role: "UX Designer" },
-  { id: 5, name: "George Black", email: "george.b@example.com", testScore: "5/5", status: "Offer Extended", role: "Backend Developer" },
+  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support", aptitudeScore: "4/5", typingWPM: 75, typingAccuracy: 96 },
+  { id: 2, name: "Diana Smith", email: "diana.s@example.com", status: "Interview Scheduled", role: "Product Manager", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null },
+  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst", aptitudeScore: "2/5", typingWPM: null, typingAccuracy: null },
+  { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer", aptitudeScore: "3/5", typingWPM: null, typingAccuracy: null },
+  { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null },
 ];
 
 type Applicant = typeof initialApplicants[0];
@@ -50,22 +51,26 @@ export default function ApplicantsPage() {
   };
 
   const handleAction = (applicant: Applicant, action: string) => {
-    if (action === "Send Assessment") {
-      const url = applicant.role
+    let url = '';
+    let message = '';
+
+    if (action === "Send Aptitude Test") {
+      url = applicant.role
         ? `${window.location.origin}/assessment?role=${encodeURIComponent(applicant.role)}`
         : `${window.location.origin}/assessment`;
-      navigator.clipboard.writeText(url);
-      toast({
-          title: "Assessment Link Copied!",
-          description: `The link has been copied to your clipboard. Send it to ${applicant.name}.`
-      });
-      return;
+      message = "Aptitude test link copied to clipboard."
+    } else if (action === "Send Typing Test") {
+      url = `${window.location.origin}/typing-test?id=${applicant.id}`;
+      message = "Typing test link copied to clipboard.";
     }
     
-    toast({
-        title: `Action: ${action}`,
-        description: `An email has been sent to ${applicant.name}.`
-    });
+    if(url) {
+        navigator.clipboard.writeText(url);
+        toast({
+            title: "Link Copied!",
+            description: `${message} Send it to ${applicant.name}.`
+        });
+    }
   }
 
   const handleStatusChange = (applicantId: number, newStatus: Status) => {
@@ -91,21 +96,20 @@ export default function ApplicantsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Candidate Assessments"
-        description="Review and manage candidates who have completed their initial assessment."
+        title="Candidate Management"
+        description="Review and manage candidates who have applied or completed assessments."
       />
       <Card>
         <CardHeader>
-          <CardTitle>Applicant Submissions</CardTitle>
-          <CardDescription>A list of all candidates who have completed the assessment.</CardDescription>
+          <CardTitle>All Applicants</CardTitle>
+          <CardDescription>A list of all candidates in the pipeline.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Candidate Name</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden sm:table-cell">Aptitude Score</TableHead>
+                <TableHead className="hidden md:table-cell">Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -114,10 +118,7 @@ export default function ApplicantsPage() {
               {applicants.map((applicant) => (
                 <TableRow key={applicant.id}>
                   <TableCell className="font-medium">{applicant.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">{applicant.email}</TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline">{applicant.testScore}</Badge>
-                  </TableCell>
+                  <TableCell className="hidden md:table-cell">{applicant.role}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(applicant.status)} className={applicant.status === "Offer Extended" ? "bg-accent text-accent-foreground" : ""}>
                         {applicant.status}
@@ -132,14 +133,19 @@ export default function ApplicantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Assessment')}>
-                            <Clipboard className="mr-2 h-4 w-4" /> Send Assessment
+                        <DropdownMenuItem asChild>
+                           <Link href={`/applicants/${applicant.id}`}>
+                               <User className="mr-2 h-4 w-4" /> View Profile
+                           </Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Aptitude Test')}>
+                            <FileText className="mr-2 h-4 w-4" /> Send Aptitude Test
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Typing Test')}>
+                            <Keyboard className="mr-2 h-4 w-4" /> Send Typing Test
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
                             <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Follow-up')}>
-                            <Mail className="mr-2 h-4 w-4" /> Send Follow-up
                         </DropdownMenuItem>
                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected')}>
                             <X className="mr-2 h-4 w-4" /> Reject Candidate

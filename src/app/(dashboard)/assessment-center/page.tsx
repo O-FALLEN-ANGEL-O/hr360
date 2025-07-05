@@ -203,7 +203,7 @@ function InterviewBotTab() {
 // --- Component for Tab 2: Aptitude Test Generator ---
 
 const aptitudeFormSchema = z.object({
-  topic: z.enum(['Logical', 'Tech', 'English', 'Comprehensive']),
+  topic: z.enum(['Logical', 'English', 'Comprehensive']),
   numQuestions: z.coerce.number().int().min(5).max(20),
   timeLimitMinutes: z.coerce.number().int().min(5).max(60),
   difficulty: z.enum(['easy', 'medium', 'hard']),
@@ -252,7 +252,6 @@ function AptitudeTestTab() {
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a topic" /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="Logical">Logical Reasoning</SelectItem>
-                            <SelectItem value="Tech">Technical Skills</SelectItem>
                             <SelectItem value="English">English Proficiency</SelectItem>
                             <SelectItem value="Comprehensive">Comprehensive</SelectItem>
                           </SelectContent>
