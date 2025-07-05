@@ -41,6 +41,7 @@ import {
 } from "recharts"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 const initialApplications = [
   {
@@ -237,12 +238,12 @@ export default function DashboardPage() {
                   <TableCell>{app.company}</TableCell>
                   <TableCell>{app.source}</TableCell>
                   <TableCell>
-                     <Badge variant={app.match > 90 ? "default" : "secondary"} className={app.match > 90 ? "bg-green-600 hover:bg-green-700": ""}>
+                     <Badge variant={app.match > 90 ? "default" : "secondary"}>
                        {app.match}%
                      </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant[app.status]} className={app.status === "Hired" ? "bg-accent text-accent-foreground" : ""}>
+                    <Badge variant={statusVariant[app.status]} className={cn(app.status === "Hired" && "bg-accent text-accent-foreground")}>
                       {app.status}
                     </Badge>
                   </TableCell>

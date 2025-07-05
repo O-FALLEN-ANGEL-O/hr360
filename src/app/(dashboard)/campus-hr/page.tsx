@@ -31,6 +31,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 const collegeSchema = z.object({
   name: z.string().min(5, "College name is required."),
@@ -205,7 +206,7 @@ export default function CampusHrPage() {
                 <TableRow key={college.id}>
                   <TableCell className="font-medium">{college.name}</TableCell>
                   <TableCell className="hidden sm:table-cell">{college.location}</TableCell>
-                  <TableCell><Badge variant={getStatusBadgeVariant(college.status)} className={college.status === 'Confirmed' || college.status === 'Scheduled' ? 'bg-accent text-accent-foreground' : ''}>{college.status}</Badge></TableCell>
+                  <TableCell><Badge variant={getStatusBadgeVariant(college.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": college.status === 'Confirmed' || college.status === 'Scheduled'})}>{college.status}</Badge></TableCell>
                   <TableCell>{college.resumes}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -246,7 +247,7 @@ export default function CampusHrPage() {
                   <TableCell>{applicant.college}</TableCell>
                   <TableCell>{applicant.role}</TableCell>
                    <TableCell>
-                    <Badge variant={getApplicantStatusBadgeVariant(applicant.status)} className={applicant.status === 'Offered' ? 'bg-accent text-accent-foreground' : ''}>
+                    <Badge variant={getApplicantStatusBadgeVariant(applicant.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === 'Offered'})}>
                         {applicant.status}
                     </Badge>
                   </TableCell>

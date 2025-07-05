@@ -63,7 +63,7 @@ export default function ApplicantsPage() {
       case "Pending Review": return "secondary";
       case "Interview Scheduled": return "default";
       case "Rejected": return "destructive";
-      case "Offer Extended": return "outline";
+      case "Offer Extended": return "default";
       case "New": return "default";
       default: return "secondary";
     }
@@ -171,7 +171,7 @@ export default function ApplicantsPage() {
             <div className="flex items-center space-x-2">
                 <Switch id="drive-mode" checked={isDriveMode} onCheckedChange={setIsDriveMode} />
                 <Label htmlFor="drive-mode" className="flex items-center gap-2">
-                    <Power className={`h-4 w-4 transition-colors ${isDriveMode ? 'text-red-500' : 'text-muted-foreground'}`} />
+                    <Power className={cn("h-4 w-4 transition-colors text-muted-foreground", {"text-destructive": isDriveMode})} />
                     Hiring Drive Mode
                 </Label>
             </div>
@@ -204,17 +204,17 @@ export default function ApplicantsPage() {
             </TableHeader>
             <TableBody>
               {applicants.map((applicant) => (
-                <TableRow key={applicant.id} className={cn("transition-colors", {"bg-primary/5": applicant.status === "New"})} >
+                <TableRow key={applicant.id} className={cn({"bg-primary/5": applicant.status === "New"})} >
                   <TableCell className="font-medium">{applicant.name}</TableCell>
                   <TableCell className="hidden md:table-cell">{applicant.role}</TableCell>
                    <TableCell className="hidden sm:table-cell">
                     <Badge variant="outline">{applicant.source}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(applicant.status as Status)} className={cn(
-                        {"bg-accent text-accent-foreground": applicant.status === "Offer Extended"},
-                        {"bg-blue-500 hover:bg-blue-600 text-white": applicant.status === "New"}
-                    )}>
+                    <Badge variant={getStatusBadgeVariant(applicant.status as Status)} className={cn({
+                        "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended",
+                        "bg-blue-500 hover:bg-blue-600 text-white": applicant.status === "New"
+                    })}>
                         {applicant.status}
                     </Badge>
                   </TableCell>

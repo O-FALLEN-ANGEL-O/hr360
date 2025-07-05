@@ -37,6 +37,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 const initialJobPostings = [
   { id: 1, title: "Senior Product Manager", department: "Product", location: "San Francisco, CA", source: "LinkedIn", applicants: 78, status: "Interviewing" },
@@ -182,7 +183,7 @@ export default function JobArchivePage() {
                   </TableCell>
                   <TableCell>{job.applicants}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(job.status)} className={job.status === 'Offer Extended' ? 'bg-accent text-accent-foreground' : ''}>
+                    <Badge variant={getStatusBadgeVariant(job.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": job.status === 'Offer Extended'})}>
                       {job.status}
                     </Badge>
                   </TableCell>

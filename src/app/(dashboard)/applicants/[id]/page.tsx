@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, MessageSquare, Info } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 // In a real app, this data would be fetched from an API
 const allApplicants = [
@@ -62,7 +63,7 @@ export default function ApplicantProfilePage() {
           case "Pending Review": return "secondary";
           case "Interview Scheduled": return "default";
           case "Rejected": return "destructive";
-          case "Offer Extended": return "outline";
+          case "Offer Extended": return "default";
           case "New": return "default";
           default: return "secondary";
         }
@@ -79,7 +80,12 @@ export default function ApplicantProfilePage() {
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">{applicant.name}</h1>
                         <p className="text-muted-foreground">{applicant.role}</p>
-                        <Badge variant={getStatusBadgeVariant(applicant.status)} className={`mt-2 ${applicant.status === 'New' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}`}>{applicant.status}</Badge>
+                        <Badge variant={getStatusBadgeVariant(applicant.status)} className={cn("mt-2", {
+                            "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended",
+                            "bg-blue-500 hover:bg-blue-600 text-white": applicant.status === "New"
+                        })}>
+                            {applicant.status}
+                        </Badge>
                     </div>
                 </div>
                 <div className="flex gap-2">
