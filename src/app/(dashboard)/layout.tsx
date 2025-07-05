@@ -1,4 +1,5 @@
 
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,9 +46,11 @@ export default function DashboardLayout({
               <p className="text-sm font-semibold">Admin User</p>
               <p className="text-xs text-muted-foreground">admin@hr360.plus</p>
             </div>
-            <Button variant="ghost" size="icon" className="shrink-0">
-              <LogOut className="size-4" />
-            </Button>
+            <Link href="/login" passHref>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <LogOut className="size-4" />
+              </Button>
+            </Link>
           </div>
         </SidebarFooter>
       </Sidebar>
@@ -55,10 +58,12 @@ export default function DashboardLayout({
         <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:px-6">
            <SidebarTrigger className="md:hidden" />
            <div className="flex-1 text-right">
-              <Button variant="ghost" size="icon">
-                <Settings className="size-5" />
-                <span className="sr-only">Settings</span>
-              </Button>
+              <Link href="/settings" passHref>
+                <Button variant="ghost" size="icon">
+                  <Settings className="size-5" />
+                  <span className="sr-only">Settings</span>
+                </Button>
+              </Link>
            </div>
         </header>
         <div className="flex-1 p-4 md:p-6 lg:p-8">{children}</div>
