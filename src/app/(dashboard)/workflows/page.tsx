@@ -7,7 +7,7 @@ import { z } from "zod"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle } from "lucide-react"
+import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle, BellRing, Hourglass } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,17 @@ const initialWorkflows = [
       { name: "IT Equipment Provisioning", icon: <Clock className="text-yellow-500" />, done: false },
       { name: "Create System Accounts", icon: <Clock className="text-yellow-500" />, done: false },
       { name: "Schedule Orientation", icon: <Check className="text-green-500" />, done: true },
+    ]
+  },
+    {
+    title: "48-Hour Resume Reminder",
+    icon: <Hourglass className="h-8 w-8 text-blue-500" />,
+    description: "If a resume is unseen for 48 hours, this workflow sends an apology and alerts HR.",
+    steps: [
+      { name: "Monitor Unseen Resumes", icon: <Check className="text-green-500" />, done: true },
+      { name: "Trigger After 48 Hours", icon: <Clock className="text-yellow-500" />, done: false },
+      { name: "Send Auto-Apology Email", icon: <Clock className="text-yellow-500" />, done: false },
+      { name: "Alert HR Team", icon: <BellRing className="text-red-500" />, done: false },
     ]
   },
   {

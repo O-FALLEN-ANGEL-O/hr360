@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, Mail, Check, X } from "lucide-react"
+import { MoreHorizontal, Mail, Check, X, CalendarPlus } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,10 +61,18 @@ export default function ApplicantsPage() {
         app.id === applicantId ? { ...app, status: newStatus } : app
       )
     );
-    toast({
-        title: "Status Updated!",
-        description: `Applicant status changed to ${newStatus}.`
-    });
+    
+    if (newStatus === 'Interview Scheduled') {
+        toast({
+            title: "Status Updated!",
+            description: `Applicant status changed to ${newStatus}. A calendar invite has been sent.`
+        });
+    } else {
+        toast({
+            title: "Status Updated!",
+            description: `Applicant status changed to ${newStatus}.`
+        });
+    }
   }
 
   return (
@@ -120,11 +128,11 @@ export default function ApplicantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAction(applicant.name, 'Send Interview Invite')}>
-                            <Mail className="mr-2 h-4 w-4" /> Send Interview Invite
+                        <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
+                            <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
                         </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
-                            <Check className="mr-2 h-4 w-4" /> Mark as Interviewing
+                         <DropdownMenuItem onClick={() => handleAction(applicant.name, 'Send Follow-up')}>
+                            <Mail className="mr-2 h-4 w-4" /> Send Follow-up
                         </DropdownMenuItem>
                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected')}>
                             <X className="mr-2 h-4 w-4" /> Reject Candidate

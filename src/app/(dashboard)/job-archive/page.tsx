@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, Share2, Send, PlusCircle } from "lucide-react"
+import { MoreHorizontal, Share2, Send, PlusCircle, Rss } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,8 +98,8 @@ export default function JobArchivePage() {
     };
     setJobs(prev => [newJob, ...prev]);
     toast({
-      title: "Job Archived!",
-      description: `"${values.title}" has been added to the archive.`,
+      title: "Job Added!",
+      description: `"${values.title}" has been added to the feed.`,
     });
     form.reset();
     setIsDialogOpen(false);
@@ -108,24 +108,24 @@ export default function JobArchivePage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Job Archive"
-        description="A history of scanned job emails with details and application status."
+        title="Live Job Feed"
+        description="A unified feed of job opportunities from integrated sources like Gmail/Outlook and APIs."
       />
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Archive New Job
+              Add Job Manually
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <DialogHeader>
-                  <DialogTitle>Archive New Job</DialogTitle>
+                  <DialogTitle>Add Job Manually</DialogTitle>
                   <DialogDescription>
-                    Manually add a job application to the archive.
+                    Manually add a job application to the feed.
                   </DialogDescription>
                 </DialogHeader>
                 <FormField control={form.control} name="title" render={({ field }) => (
@@ -146,7 +146,7 @@ export default function JobArchivePage() {
                   <FormItem><FormLabel>Match %</FormLabel><FormControl><Input type="number" min="0" max="100" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <DialogFooter>
-                  <Button type="submit">Archive Job</Button>
+                  <Button type="submit">Add Job</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -155,7 +155,8 @@ export default function JobArchivePage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>All Scanned Jobs</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Rss className="h-5 w-5" /> All Scanned & Aggregated Jobs</CardTitle>
+          <CardDescription>This feed shows opportunities detected from email inboxes and aggregated from job portals.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

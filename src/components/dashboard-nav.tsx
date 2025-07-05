@@ -62,7 +62,12 @@ export function DashboardNav() {
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/job-archive")}>
-              <Link href="/job-archive">Job Archive</Link>
+              <Link href="/job-archive">Live Job Feed</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
+              <Link href="/skill-gap">Internship Aggregator</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
@@ -128,11 +133,6 @@ export function DashboardNav() {
           Talent Development
         </SidebarMenuButton>
         <SidebarMenuSub>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
-              <Link href="/skill-gap">Skill Gap Map</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/career-growth")}>
               <Link href="/career-growth">Career Growth Predictor</Link>
