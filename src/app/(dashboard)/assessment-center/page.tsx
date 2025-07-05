@@ -66,6 +66,10 @@ function InterviewBotTab() {
         toast({ title: "Response Required", description: "Please provide the candidate's response to evaluate.", variant: "destructive"})
         return;
     }
+    if (!result) {
+        toast({ title: "Generate Questions First", description: "Please generate questions before evaluating a response.", variant: "destructive"})
+        return;
+    }
     setIsLoading(true)
     try {
       const response = await generateAndEvaluateInterview(values)
@@ -112,7 +116,7 @@ function InterviewBotTab() {
                       </FormItem>
                     )}
                   />
-                  <Button type="button" onClick={form.handleSubmit(onGenerate)} disabled={isLoading} className="w-full">
+                  <Button type="button" onClick={form.handleSubmit(onGenerate)} disabled={isLoading}>
                     {isLoading && !form.getValues("candidateResponse") ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
                     ) : (
@@ -204,6 +208,7 @@ function InterviewBotTab() {
 
 const aptitudeFormSchema = z.object({
   topic: z.enum(['Logical', 'English', 'Comprehensive']),
+  role: z.string().optional(),
   numQuestions: z.coerce.number().int().min(5).max(20),
   timeLimitMinutes: z.coerce.number().int().min(5).max(60),
   difficulty: z.enum(['easy', 'medium', 'hard']),
@@ -216,7 +221,7 @@ function AptitudeTestTab() {
 
     const form = useForm<z.infer<typeof aptitudeFormSchema>>({
         resolver: zodResolver(aptitudeFormSchema),
-        defaultValues: { topic: "Logical", numQuestions: 10, timeLimitMinutes: 15, difficulty: "medium" },
+        defaultValues: { topic: "Logical", role: "Software Engineer", numQuestions: 10, timeLimitMinutes: 15, difficulty: "medium" },
     })
 
     async function onSubmit(values: z.infer<typeof aptitudeFormSchema>) {
@@ -256,6 +261,13 @@ function AptitudeTestTab() {
                             <SelectItem value="Comprehensive">Comprehensive</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="role" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Role (Optional)</FormLabel>
+                        <FormControl><Input placeholder="e.g., Data Analyst" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
