@@ -3,9 +3,12 @@
 
 import {
   Users,
-  Briefcase,
   BarChart,
-  PieChart
+  PieChart,
+  TrendingUp,
+  Target,
+  Smile,
+  CheckCircle
 } from "lucide-react"
 import {
   Card,
@@ -100,10 +103,32 @@ const pipelineData = [
     { name: 'Hired', value: 15, fill: 'hsl(var(--chart-5))' }
 ];
 
+const StatCard = ({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode, description: string }) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {icon}
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+        </CardContent>
+    </Card>
+);
+
+
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader title="HR Dashboard" description="An overview of key metrics for the organization." />
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total Employees" value="1,243" icon={<Users className="h-4 w-4 text-muted-foreground" />} description="+20.1% from last month" />
+        <StatCard title="Attrition Rate" value="8.2%" icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} description="-1.5% from last quarter" />
+        <StatCard title="Open Positions" value="42" icon={<Target className="h-4 w-4 text-muted-foreground" />} description="+5 since last week" />
+        <StatCard title="Compliance" value="99.8%" icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />} description="All policies acknowledged" />
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -128,7 +153,6 @@ export default function DashboardPage() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                     </Pie>
-                    <Legend />
                 </RechartsPieChart>
              </ResponsiveContainer>
           </CardContent>

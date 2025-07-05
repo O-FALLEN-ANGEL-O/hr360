@@ -16,7 +16,8 @@ import {
   Video,
   ClipboardList,
   GanttChartSquare,
-  UserCheck
+  UserCheck,
+  Trophy
 } from "lucide-react"
 
 import {
@@ -91,6 +92,11 @@ export function DashboardNav() {
               <Link href="/remote-status">Remote Status</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/recognition")}>
+              <Link href="/recognition">Recognition Engine</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/culture-fit")}>
               <Link href="/culture-fit">Culture Fit Predictor</Link>
@@ -161,11 +167,6 @@ export function DashboardNav() {
            <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/mobile-bot")}>
               <Link href="/mobile-bot">Mobile HR Bot</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/ai-responder")}>
-                <Link href="/ai-responder">AI Email Responder</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         </SidebarMenuSub>
