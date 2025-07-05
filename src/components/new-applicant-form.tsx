@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { processResume } from '@/ai/flows/resume-processor';
-import { Loader2, User, Mail, Phone, Upload, Camera, Scan, Sparkles } from 'lucide-react';
+import { Loader2, User, Upload, Camera, Scan, Sparkles, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
@@ -21,10 +22,6 @@ const formSchema = z.object({
   resumeText: z.string().optional(),
 });
 
-type NewApplicantFormProps = {
-  onApplicantAdd: (applicantData: any) => void;
-};
-
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,8 +31,9 @@ const fileToDataUri = (file: File): Promise<string> => {
   });
 };
 
-export function NewApplicantForm({ onApplicantAdd }: NewApplicantFormProps) {
+export function NewApplicantForm() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -60,7 +58,7 @@ export function NewApplicantForm({ onApplicantAdd }: NewApplicantFormProps) {
       form.setValue('phone', result.phone);
       form.setValue('resumeText', result.rawText);
       
-      toast({ title: 'Resume Processed!', description: 'Applicant details have been auto-filled.' });
+      toast({ title: 'Resume Processed!', description: 'Your details have been auto-filled.' });
     } catch (error) {
       console.error(error);
       toast({ title: 'Error', description: 'Failed to process resume.', variant: 'destructive' });
@@ -87,7 +85,7 @@ export function NewApplicantForm({ onApplicantAdd }: NewApplicantFormProps) {
         form.setValue('email', result.email);
         form.setValue('phone', result.phone);
         form.setValue('resumeText', result.rawText);
-        toast({ title: 'Resume Captured & Processed!', description: 'Applicant details have been auto-filled.' });
+        toast({ title: 'Resume Captured & Processed!', description: 'Your details have been auto-filled.' });
     } catch (error) {
         console.error(error);
         toast({ title: 'Error', description: 'Failed to process captured image.', variant: 'destructive' });
@@ -129,8 +127,24 @@ export function NewApplicantForm({ onApplicantAdd }: NewApplicantFormProps) {
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onApplicantAdd(values);
-    form.reset();
+    // In a real app, this would submit to a backend.
+    // For this prototype, we'll just show a success message.
+    console.log(values);
+    setIsSubmitted(true);
+    toast({
+        title: "Registration Successful!",
+        description: "An HR representative will be with you shortly."
+    })
+  }
+
+  if (isSubmitted) {
+    return (
+        <div className="text-center p-8">
+            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <h3 className="text-2xl font-bold">Thank You!</h3>
+            <p className="text-muted-foreground mt-2">Your registration is complete. Please have a seat, and an HR representative will be with you shortly.</p>
+        </div>
+    )
   }
 
   return (
@@ -165,12 +179,12 @@ export function NewApplicantForm({ onApplicantAdd }: NewApplicantFormProps) {
             <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g., +1234567890" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="resumeText" render={({ field }) => (
-            <FormItem><FormLabel>Resume Content (Extracted)</FormLabel><FormControl><Textarea placeholder="Resume text will appear here after processing..." rows={8} {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Resume Content (Extracted)</FormLabel><FormControl><Textarea placeholder="Resume text will appear here after processing..." rows={8} {...field} readOnly /></FormControl><FormMessage /></FormItem>
           )} />
 
           <Button type="submit" disabled={isProcessing} className="w-full">
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4" />}
-            Add Applicant
+            Register
           </Button>
         </form>
       </Form>

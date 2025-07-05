@@ -15,23 +15,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, User, PlusCircle } from "lucide-react"
+import { MoreHorizontal, User, PlusCircle, Link2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { NewApplicantForm } from "@/components/new-applicant-form"
 
 const initialApplicants = [
   { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support" },
@@ -47,7 +38,6 @@ type Status = "Pending Review" | "Interview Scheduled" | "Rejected" | "Offer Ext
 
 export default function ApplicantsPage() {
   const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const getStatusBadgeVariant = (status: Status) => {
@@ -60,22 +50,14 @@ export default function ApplicantsPage() {
     }
   };
 
-  const handleAddApplicant = (data: { fullName: string, email: string }) => {
-    const newId = applicants.length > 0 ? Math.max(...applicants.map(a => a.id)) + 1 : 1;
-    const newApplicant = {
-        id: newId,
-        name: data.fullName,
-        email: data.email,
-        status: "Pending Review" as Status,
-        role: "To Be Determined",
-    };
-    setApplicants(prev => [newApplicant, ...prev]);
-    setIsDialogOpen(false);
+  const handleCopyRegistrationLink = () => {
+    const url = `${window.location.origin}/register`;
+    navigator.clipboard.writeText(url);
     toast({
-        title: "Applicant Added!",
-        description: `${data.fullName} has been added to the system with ID APP-00${newId}.`
+        title: "Registration Link Copied!",
+        description: "You can now share the link with the walk-in applicant.",
     });
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -84,20 +66,9 @@ export default function ApplicantsPage() {
         description="Review and manage all candidates in the pipeline."
       />
        <div className="flex justify-end">
-         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-           <DialogTrigger asChild>
-             <Button><PlusCircle className="mr-2 h-4 w-4" /> Register Walk-in Applicant</Button>
-           </DialogTrigger>
-           <DialogContent className="sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>New Applicant Registration</DialogTitle>
-                <DialogDescription>
-                    Use this form to register a new walk-in applicant. The AI will help you fill out the details.
-                </DialogDescription>
-              </DialogHeader>
-              <NewApplicantForm onApplicantAdd={handleAddApplicant} />
-           </DialogContent>
-         </Dialog>
+          <Button onClick={handleCopyRegistrationLink}>
+            <Link2 className="mr-2 h-4 w-4" /> Copy Walk-in Registration Link
+          </Button>
        </div>
       <Card>
         <CardHeader>
