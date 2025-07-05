@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,13 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { generateAptitudeTest, type AptitudeTestOutput } from '@/ai/flows/aptitude-test-generator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowRight, CheckCircle, Award, Building } from 'lucide-react';
+import { Loader2, ArrowRight, CheckCircle, Award, Building, Phone, School } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 
 const infoSchema = z.object({
   name: z.string().min(2, "Name is required."),
   email: z.string().email("Please enter a valid email."),
+  contactNumber: z.string().min(10, "A valid contact number is required.").max(15, "Contact number is too long."),
+  collegeName: z.string().min(3, "College name is required."),
 });
 
 const testSchema = z.object({
@@ -33,11 +36,16 @@ export default function AssessmentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [testData, setTestData] = useState<AptitudeTestOutput | null>(null);
   const [score, setScore] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const infoForm = useForm<z.infer<typeof infoSchema>>({
     resolver: zodResolver(infoSchema),
-    defaultValues: { name: '', email: '' },
+    defaultValues: { name: '', email: '', contactNumber: '', collegeName: '' },
   });
 
   const testForm = useForm<z.infer<typeof testSchema>>({
@@ -83,6 +91,14 @@ export default function AssessmentPage() {
     toast({ title: 'Test Submitted!', description: 'Your results are ready.' });
   }
 
+  if (!mounted) {
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted/20 p-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/20 p-4 font-sans">
       <div className="w-full max-w-2xl">
@@ -94,8 +110,8 @@ export default function AssessmentPage() {
         {stage === 'info' && (
           <Card>
             <CardHeader>
-              <CardTitle>Welcome!</CardTitle>
-              <CardDescription>Please provide your basic information to begin the assessment.</CardDescription>
+              <CardTitle>Welcome to the Aptitude Test</CardTitle>
+              <CardDescription>Please fill in your details to begin. This test will help us understand your skills better. Good luck!</CardDescription>
             </CardHeader>
             <Form {...infoForm}>
               <form onSubmit={infoForm.handleSubmit(onStartTest)}>
@@ -105,6 +121,20 @@ export default function AssessmentPage() {
                   )} />
                   <FormField control={infoForm.control} name="email" render={({ field }) => (
                     <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={infoForm.control} name="contactNumber" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Phone className="h-4 w-4" />Contact Number</FormLabel>
+                      <FormControl><Input placeholder="Your contact number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={infoForm.control} name="collegeName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><School className="h-4 w-4" />College Name</FormLabel>
+                      <FormControl><Input placeholder="Your college name" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )} />
                 </CardContent>
                 <CardFooter>
