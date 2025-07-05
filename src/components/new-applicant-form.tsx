@@ -131,18 +131,14 @@ export function NewApplicantForm() {
     // For this prototype, we'll just show a success message.
     console.log(values);
     setIsSubmitted(true);
-    toast({
-        title: "Registration Successful!",
-        description: "An HR representative will be with you shortly."
-    })
   }
 
   if (isSubmitted) {
     return (
         <div className="text-center p-8">
             <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <h3 className="text-2xl font-bold">Thank You!</h3>
-            <p className="text-muted-foreground mt-2">Your registration is complete. Please have a seat, and an HR representative will be with you shortly.</p>
+            <h3 className="text-2xl font-bold">Registration Complete!</h3>
+            <p className="text-muted-foreground mt-2">Thank you. Please have a seat, and an HR representative will guide you to the next step shortly.</p>
         </div>
     )
   }

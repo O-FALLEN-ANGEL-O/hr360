@@ -44,13 +44,9 @@ export default function ApplicantProfilePage() {
 
     const handleAction = (action: string) => {
         // In a real app, this would trigger a backend update to set applicant.assignedTest
-        const portalLink = `${window.location.origin}/portal/${applicant?.id}`;
-        
-        navigator.clipboard.writeText(portalLink);
-
         toast({
-            title: `Assessment Assigned & Link Copied`,
-            description: `Simulated: ${action} assigned to ${applicant?.name}. The portal link has been copied to your clipboard. Please send it to the candidate.`
+            title: `Assessment Assigned`,
+            description: `Test has been assigned. The candidate will be notified in their portal.`
         })
     }
     
