@@ -65,6 +65,11 @@ export function DashboardNav() {
         </SidebarMenuButton>
         <SidebarMenuSub>
           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/applicants")}>
+              <Link href="/applicants">Applicants</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/match-score")}>
               <Link href="/match-score">GPT Match Score</Link>
             </SidebarMenuSubButton>
