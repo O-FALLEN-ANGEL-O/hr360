@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Loader2, TrendingUp, Flame, DollarSign, Lightbulb } from "lucide-react";
+import { Bot, Loader2, TrendingUp, Flame, DollarSign, Lightbulb, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePredictiveAnalyticsDashboard, type PredictiveAnalyticsDashboardOutput } from "@/ai/flows/predictive-analytics-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AnalyticsPage() {
   const [result, setResult] = useState<PredictiveAnalyticsDashboardOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
-  const fetchAnalytics = async () => {
-    setIsLoading(true);
+  const fetchAnalytics = useCallback(async () => {
+    if (!isLoading) setIsRefreshing(true);
     try {
       // Mock data for the flow input
       const mockInput = {
@@ -25,6 +26,12 @@ export default function AnalyticsPage() {
       };
       const response = await generatePredictiveAnalyticsDashboard(mockInput);
       setResult(response);
+       if (!isLoading) {
+         toast({
+            title: "Analytics Refreshed!",
+            description: "The latest predictive insights have been loaded.",
+         });
+       }
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast({
@@ -34,12 +41,13 @@ export default function AnalyticsPage() {
       });
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, [isLoading, toast]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [fetchAnalytics]);
 
   const AnalyticsCard = ({ icon, title, children }: { icon: React.ReactNode, title: string, children: React.ReactNode }) => (
       <Card>
@@ -55,10 +63,16 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Predictive Analytics Dashboard"
-        description="AI-driven insights on attrition, burnout, and salary benchmarks."
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Predictive Analytics Dashboard"
+          description="AI-driven insights on attrition, burnout, and salary benchmarks."
+        />
+        <Button variant="outline" onClick={() => fetchAnalytics()} disabled={isRefreshing || isLoading}>
+            {isRefreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            Refresh
+        </Button>
+      </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
         <AnalyticsCard icon={<TrendingUp />} title="Attrition Prediction">

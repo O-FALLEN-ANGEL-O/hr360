@@ -1,10 +1,14 @@
+"use client"
+
+import { useState } from "react"
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-const employees = [
+const initialEmployees = [
   { id: 1, name: "Alice Johnson", role: "Software Engineer", status: "Remote", avatar: "https://placehold.co/100x100.png?text=AJ" },
   { id: 2, name: "Bob Williams", role: "Product Manager", status: "Office", avatar: "https://placehold.co/100x100.png?text=BW" },
   { id: 3, name: "Charlie Brown", role: "UX Designer", status: "Leave", avatar: "https://placehold.co/100x100.png?text=CB" },
@@ -15,22 +19,36 @@ const employees = [
   { id: 8, name: "Hannah Martinez", role: "HR Specialist", status: "Office", avatar: "https://placehold.co/100x100.png?text=HM" },
 ];
 
+type Employee = typeof initialEmployees[0];
+type Status = "Remote" | "Office" | "Leave" | "Probation";
+const statuses: Status[] = ["Remote", "Office", "Leave", "Probation"];
+
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case "Remote":
-      return "bg-blue-500 text-white";
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Office":
-      return "bg-green-500 text-white";
+      return "bg-green-500 text-white hover:bg-green-600";
     case "Leave":
-      return "bg-yellow-500 text-black";
+      return "bg-yellow-500 text-black hover:bg-yellow-600";
     case "Probation":
-      return "bg-purple-500 text-white";
+      return "bg-purple-500 text-white hover:bg-purple-600";
     default:
       return "bg-gray-500 text-white";
   }
 };
 
 export default function RemoteStatusPage() {
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+
+  const handleStatusChange = (employeeId: number, newStatus: Status) => {
+    setEmployees(
+      employees.map((emp) =>
+        emp.id === employeeId ? { ...emp, status: newStatus } : emp
+      )
+    );
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -56,9 +74,24 @@ export default function RemoteStatusPage() {
               <p className="text-sm text-muted-foreground">{employee.role}</p>
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Badge className={cn("text-xs", getStatusBadgeClass(employee.status))}>
-                {employee.status}
-              </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Badge className={cn("text-xs cursor-pointer", getStatusBadgeClass(employee.status))}>
+                    {employee.status}
+                  </Badge>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center">
+                  {statuses.map((status) => (
+                    <DropdownMenuItem
+                      key={status}
+                      onSelect={() => handleStatusChange(employee.id, status)}
+                      disabled={employee.status === status}
+                    >
+                      {status}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardFooter>
           </Card>
         ))}
