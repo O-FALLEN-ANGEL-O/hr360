@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, Briefcase } from "lucide-react"
+import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, Briefcase, File, CalendarClock, UserX } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -46,17 +46,17 @@ const initialColleges = [
   { id: 5, name: "College of Engineering, Pune", location: "Pune, MH", status: "Scheduled", resumes: 150 },
 ];
 
-const initialInternships = [
-  { id: 1, title: "Software Engineering Intern", company: "Tech Giant", source: "LinkedIn", url: "#" },
-  { id: 2, title: "Product Management Intern", company: "Innovate Inc.", source: "Naukri", url: "#" },
-  { id: 3, title: "Data Science Intern", company: "DataDriven Co.", source: "Internshala", url: "#" },
-  { id: 4, title: "UX/UI Design Intern", company: "Creative Solutions", source: "LinkedIn", url: "#" },
-  { id: 5, title: "Marketing Intern", company: "AdVantage", source: "Naukri", url: "#" },
-  { id: 6, title: "Backend Developer Intern", company: "CloudNet", source: "Internshala", url: "#" },
+const initialInternshipApplicants = [
+  { id: 1, name: "Priya Sharma", college: "IIT Bombay", role: "SDE Intern", status: "Screening" },
+  { id: 2, name: "Rohan Gupta", college: "NIT Trichy", role: "Product Intern", status: "Interview Scheduled" },
+  { id: 3, name: "Ananya Reddy", college: "VIT Vellore", role: "Data Science Intern", status: "Applied" },
+  { id: 4, name: "Vikram Singh", college: "COEP", role: "SDE Intern", status: "Rejected" },
+  { id: 5, name: "Sneha Patel", college: "IIT Delhi", role: "UX Intern", status: "Offered" },
 ];
 
-
 type College = typeof initialColleges[0];
+type InternshipApplicant = typeof initialInternshipApplicants[0];
+type ApplicantStatus = "Applied" | "Screening" | "Interview Scheduled" | "Offered" | "Rejected";
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -68,8 +68,20 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
+const getApplicantStatusBadgeVariant = (status: ApplicantStatus) => {
+    switch (status) {
+      case "Interview Scheduled": return "default";
+      case "Offered": return "default";
+      case "Applied": return "secondary";
+      case "Screening": return "outline";
+      case "Rejected": return "destructive";
+      default: return "secondary";
+    }
+  };
+
 export default function CampusHrPage() {
   const [colleges, setColleges] = useState<College[]>(initialColleges);
+  const [applicants, setApplicants] = useState<InternshipApplicant[]>(initialInternshipApplicants);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -78,13 +90,6 @@ export default function CampusHrPage() {
     defaultValues: { name: "", location: "", contactEmail: "" },
   });
   
-  const handleApply = (title: string, company: string) => {
-    toast({
-        title: "Application Sent!",
-        description: `Your application for the ${title} role at ${company} has been submitted.`
-    });
-  }
-
   function onSubmit(values: z.infer<typeof collegeSchema>) {
     const newCollege: College = {
       id: colleges.length + 1,
@@ -102,11 +107,40 @@ export default function CampusHrPage() {
     setIsDialogOpen(false);
   }
 
+  const handleApplicantStatusChange = (applicantId: number, newStatus: ApplicantStatus) => {
+    setApplicants(
+      applicants.map((app) =>
+        app.id === applicantId ? { ...app, status: newStatus } : app
+      )
+    );
+    
+    const applicantName = applicants.find(app => app.id === applicantId)?.name;
+
+    if (newStatus === 'Interview Scheduled') {
+        toast({
+            title: "Interview Scheduled!",
+            description: `An email has been sent to ${applicantName} with the interview details.`
+        });
+    } else {
+        toast({
+            title: "Status Updated!",
+            description: `${applicantName}'s status changed to ${newStatus}.`
+        });
+    }
+  }
+
+  const handleViewResume = (applicantName: string) => {
+      toast({
+          title: "Viewing Resume",
+          description: `Opening ${applicantName}'s resume in a new tab.`
+      })
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
         title="Campus Drive & Internship Aggregator"
-        description="Invite colleges, manage campus drives, and browse aggregated internship postings."
+        description="Invite colleges, manage campus drives, and track internship applicants."
       />
       
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -191,32 +225,51 @@ export default function CampusHrPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Aggregated Internships</CardTitle>
-          <CardDescription>Browse the latest internship opportunities from top platforms.</CardDescription>
+          <CardTitle>Internship & Campus Applicants</CardTitle>
+          <CardDescription>Manage candidates from campus drives and internship postings.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Internship Title</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Applicant Name</TableHead>
+                <TableHead>College</TableHead>
+                <TableHead>Role Applied For</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {initialInternships.map((internship) => (
-                <TableRow key={internship.id}>
-                  <TableCell className="font-medium">{internship.title}</TableCell>
-                  <TableCell>{internship.company}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{internship.source}</Badge>
+              {applicants.map((applicant) => (
+                <TableRow key={applicant.id}>
+                  <TableCell className="font-medium">{applicant.name}</TableCell>
+                  <TableCell>{applicant.college}</TableCell>
+                  <TableCell>{applicant.role}</TableCell>
+                   <TableCell>
+                    <Badge variant={getApplicantStatusBadgeVariant(applicant.status)} className={applicant.status === 'Offered' ? 'bg-accent text-accent-foreground' : ''}>
+                        {applicant.status}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button onClick={() => handleApply(internship.title, internship.company)}>
-                        <Briefcase className="mr-2 h-4 w-4" />
-                        Apply Now
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewResume(applicant.name)}>
+                                <File className="mr-2 h-4 w-4" /> View Resume
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleApplicantStatusChange(applicant.id, 'Interview Scheduled')}>
+                                <CalendarClock className="mr-2 h-4 w-4" /> Schedule Interview
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleApplicantStatusChange(applicant.id, 'Rejected')}>
+                                <UserX className="mr-2 h-4 w-4" /> Reject Candidate
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
