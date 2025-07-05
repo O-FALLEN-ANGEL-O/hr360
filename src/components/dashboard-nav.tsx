@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -19,7 +20,14 @@ import {
   Trophy,
   GraduationCap,
   Sparkles,
-  School
+  School,
+  FileSearch,
+  Mail,
+  Ticket,
+  Network,
+  Users2,
+  UserCog,
+  ShieldQuestion
 } from "lucide-react"
 
 import {
@@ -52,27 +60,27 @@ export function DashboardNav() {
       <SidebarMenuItem>
         <SidebarMenuButton>
           <Briefcase />
-          Recruitment
+          Talent Acquisition
         </SidebarMenuButton>
         <SidebarMenuSub>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/applicants")}>
-              <Link href="/applicants">Applicants</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/job-archive")}>
               <Link href="/job-archive">Live Job Feed</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
-              <Link href="/skill-gap">Internship Aggregator</Link>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/campus-hr")}>
+              <Link href="/campus-hr">Campus & Internships</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/campus-hr")}>
-              <Link href="/campus-hr">Campus HR</Link>
+            <SidebarMenuSubButton asChild isActive={isActive("/assessment-center")}>
+              <Link href="/assessment-center">Assessment Center</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/applicants")}>
+              <Link href="/applicants">Applicants</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
@@ -80,78 +88,15 @@ export function DashboardNav() {
               <Link href="/match-score">GPT Match Score</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/interview-bot")}>
-              <Link href="/interview-bot">Interview Bot</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-           <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/video-analyzer")}>
-              <Link href="/video-analyzer">Video Analyzer</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/aptitude-test")}>
-              <Link href="/aptitude-test">Aptitude Test Generator</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
         </SidebarMenuSub>
       </SidebarMenuItem>
 
-      <SidebarMenuItem>
+       <SidebarMenuItem>
         <SidebarMenuButton>
-          <Users />
-          Employee Management
+          <FileText />
+          Docs & Communication
         </SidebarMenuButton>
         <SidebarMenuSub>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/remote-status")}>
-              <Link href="/remote-status">Remote Status</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-           <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/recognition")}>
-              <Link href="/recognition">Recognition Engine</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/culture-fit")}>
-              <Link href="/culture-fit">Culture Fit Predictor</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/sentiment-analyzer")}>
-              <Link href="/sentiment-analyzer">Sentiment Analyzer</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-        </SidebarMenuSub>
-      </SidebarMenuItem>
-
-      <SidebarMenuItem>
-        <SidebarMenuButton>
-          <GanttChartSquare />
-          Talent Development
-        </SidebarMenuButton>
-        <SidebarMenuSub>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/career-growth")}>
-              <Link href="/career-growth">Career Growth Predictor</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-        </SidebarMenuSub>
-      </SidebarMenuItem>
-      
-      <SidebarMenuItem>
-        <SidebarMenuButton>
-          <Building2 />
-          Operations & Compliance
-        </SidebarMenuButton>
-        <SidebarMenuSub>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/workflows")}>
-              <Link href="/workflows">HR Workflows</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/document-generator")}>
               <Link href="/document-generator">Document Generator</Link>
@@ -159,12 +104,7 @@ export function DashboardNav() {
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/ai-responder")}>
-              <Link href="/ai-responder">AI Email Responder</Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-          <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/compliance")}>
-              <Link href="/compliance">Compliance Center</Link>
+              <Link href="/ai-responder">AI Email Composer</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
@@ -175,10 +115,63 @@ export function DashboardNav() {
         </SidebarMenuSub>
       </SidebarMenuItem>
 
+      <SidebarMenuItem>
+        <SidebarMenuButton>
+          <Users2 />
+          Employee Management
+        </SidebarMenuButton>
+        <SidebarMenuSub>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/remote-status")}>
+              <Link href="/remote-status">Live Employee Status</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/career-growth")}>
+              <Link href="/career-growth">Career Path Predictor</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/recognition")}>
+              <Link href="/recognition">Recognition & Rewards</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/sentiment-analyzer")}>
+              <Link href="/sentiment-analyzer">Sentiment Analyzer</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/culture-fit")}>
+              <Link href="/culture-fit">Culture Fit Predictor</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        </SidebarMenuSub>
+      </SidebarMenuItem>
+      
+      <SidebarMenuItem>
+        <SidebarMenuButton>
+          <UserCog />
+          Automation & Compliance
+        </SidebarMenuButton>
+        <SidebarMenuSub>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/workflows")}>
+              <Link href="/workflows">HR Workflows</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/compliance")}>
+              <Link href="/compliance">Compliance Center</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        </SidebarMenuSub>
+      </SidebarMenuItem>
+
        <SidebarMenuItem>
         <SidebarMenuButton>
-          <BarChart3 />
-          Analytics & Tools
+          <Sparkles />
+          Intelligence & Tools
         </SidebarMenuButton>
         <SidebarMenuSub>
           <SidebarMenuSubItem>

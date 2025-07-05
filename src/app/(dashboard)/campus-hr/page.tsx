@@ -17,9 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, CheckCircle } from "lucide-react"
+import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, Briefcase } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Progress } from "@/components/ui/progress"
 import {
   Dialog,
   DialogContent,
@@ -47,6 +46,16 @@ const initialColleges = [
   { id: 5, name: "College of Engineering, Pune", location: "Pune, MH", status: "Scheduled", resumes: 150 },
 ];
 
+const initialInternships = [
+  { id: 1, title: "Software Engineering Intern", company: "Tech Giant", source: "LinkedIn", url: "#" },
+  { id: 2, title: "Product Management Intern", company: "Innovate Inc.", source: "Naukri", url: "#" },
+  { id: 3, title: "Data Science Intern", company: "DataDriven Co.", source: "Internshala", url: "#" },
+  { id: 4, title: "UX/UI Design Intern", company: "Creative Solutions", source: "LinkedIn", url: "#" },
+  { id: 5, title: "Marketing Intern", company: "AdVantage", source: "Naukri", url: "#" },
+  { id: 6, title: "Backend Developer Intern", company: "CloudNet", source: "Internshala", url: "#" },
+];
+
+
 type College = typeof initialColleges[0];
 
 const getStatusBadgeVariant = (status: string) => {
@@ -68,6 +77,13 @@ export default function CampusHrPage() {
     resolver: zodResolver(collegeSchema),
     defaultValues: { name: "", location: "", contactEmail: "" },
   });
+  
+  const handleApply = (title: string, company: string) => {
+    toast({
+        title: "Application Sent!",
+        description: `Your application for the ${title} role at ${company} has been submitted.`
+    });
+  }
 
   function onSubmit(values: z.infer<typeof collegeSchema>) {
     const newCollege: College = {
@@ -89,8 +105,8 @@ export default function CampusHrPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Campus HR Mode"
-        description="Invite colleges, collect bulk resumes, and manage campus recruitment drives."
+        title="Campus Drive & Internship Aggregator"
+        description="Invite colleges, manage campus drives, and browse aggregated internship postings."
       />
       
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -165,6 +181,42 @@ export default function CampusHrPage() {
                         <DropdownMenuItem><Mail className="mr-2 h-4 w-4" /> Send Reminder</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Aggregated Internships</CardTitle>
+          <CardDescription>Browse the latest internship opportunities from top platforms.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Internship Title</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {initialInternships.map((internship) => (
+                <TableRow key={internship.id}>
+                  <TableCell className="font-medium">{internship.title}</TableCell>
+                  <TableCell>{internship.company}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{internship.source}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button onClick={() => handleApply(internship.title, internship.company)}>
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Apply Now
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
