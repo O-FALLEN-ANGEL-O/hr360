@@ -2,7 +2,7 @@ import {
   Activity,
   Briefcase,
   Users,
-  CheckCircle,
+  ShieldCheck,
 } from "lucide-react"
 import {
   Card,
@@ -70,56 +70,56 @@ const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "des
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
-      <PageHeader title="Dashboard" description="Welcome to your HR360+ overview." />
+      <PageHeader title="HR Dashboard" description="An overview of key metrics for the organization." />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Applications
-            </CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Interviews Scheduled
+              Total Employees
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+52</div>
+            <div className="text-2xl font-bold">1,423</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              +1.5% from last month
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Hires</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              Quarterly Attrition
+            </CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12</div>
-            <p className="text-xs text-muted-foreground">+19% from last month</p>
+            <div className="text-2xl font-bold">2.1%</div>
+            <p className="text-xs text-muted-foreground">
+              Slightly above target
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">35</div>
+            <p className="text-xs text-muted-foreground">+2 since last hour</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Active Job Postings
+              Compliance Rate
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">35</div>
-            <p className="text-xs text-muted-foreground">+2 since last hour</p>
+            <div className="text-2xl font-bold">98.5%</div>
+            <p className="text-xs text-muted-foreground">All trainings up to date</p>
           </CardContent>
         </Card>
       </div>
@@ -127,6 +127,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Applications</CardTitle>
+          <CardDescription>Latest candidates in the hiring pipeline.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

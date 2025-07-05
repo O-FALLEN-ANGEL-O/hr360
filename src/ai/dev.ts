@@ -3,8 +3,6 @@ config();
 
 import '@/ai/flows/mobile-hr-bot.ts';
 import '@/ai/flows/document-generator.ts';
-import '@/ai/flows/ai-email-responder.ts';
-import '@/ai/flows/smart-resume-builder.ts';
 import '@/ai/flows/interview-bot.ts';
 import '@/ai/flows/predictive-analytics-dashboard.ts';
 import '@/ai/flows/sentiment-analyzer.ts';
