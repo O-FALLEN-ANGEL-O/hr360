@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/page-header"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const formSchema = z.object({
   jobDescription: z.string().min(50, { message: "Job description must be at least 50 characters." }),
@@ -26,6 +27,7 @@ const formSchema = z.object({
   senderName: z.string().min(2, { message: "Your name is required." }),
   senderEmail: z.string().email({ message: "A valid sender email is required."}),
   customSignature: z.string().min(10, { message: "A signature is required." }),
+  tone: z.enum(['Formal', 'Enthusiastic', 'Concise']),
 })
 
 export default function AiEmailResponderPage() {
@@ -47,6 +49,7 @@ export default function AiEmailResponderPage() {
       senderName: "",
       senderEmail: "",
       customSignature: "Best regards,\n[Your Name]",
+      tone: "Formal",
     },
   })
 
@@ -151,6 +154,26 @@ export default function AiEmailResponderPage() {
                     <FormItem>
                       <FormLabel>Recipient Email</FormLabel>
                       <FormControl><Input type="email" placeholder="e.g., hr@acme.com" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="tone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tone of Voice</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select a tone" /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Formal">Formal</SelectItem>
+                            <SelectItem value="Enthusiastic">Enthusiastic</SelectItem>
+                            <SelectItem value="Concise">Concise</SelectItem>
+                          </SelectContent>
+                        </Select>
                       <FormMessage />
                     </FormItem>
                   )}

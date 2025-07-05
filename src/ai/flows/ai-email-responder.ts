@@ -21,6 +21,7 @@ const AiEmailResponderInputSchema = z.object({
   senderName: z.string().describe('The name of the sender.'),
   senderEmail: z.string().email().describe('The email address of the sender.'),
   customSignature: z.string().describe('The custom email signature to include.'),
+  tone: z.enum(['Formal', 'Enthusiastic', 'Concise']).describe('The desired tone for the email.'),
 });
 
 export type AiEmailResponderInput = z.infer<typeof AiEmailResponderInputSchema>;
@@ -41,7 +42,9 @@ const aiEmailResponderPrompt = ai.definePrompt({
   output: {schema: AiEmailResponderOutputSchema},
   prompt: `You are an AI-powered email assistant designed to craft personalized emails to potential employers.
 
-  Given the job description, resume, and cover letter, create a compelling and tailored email that increases the chances of the applicant getting an interview. The email should include a custom signature at the end. The email should be polite and professional.
+  Given the job description, resume, and cover letter, create a compelling and tailored email that increases the chances of the applicant getting an interview. The email should include a custom signature at the end. 
+  
+  Please adopt a {{{tone}}} tone for this email.
 
   Job Description: {{{jobDescription}}}
   Resume: {{{resume}}}
