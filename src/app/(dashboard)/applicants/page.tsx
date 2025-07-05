@@ -24,11 +24,11 @@ import {
 import { useToast } from "@/hooks/use-toast"
 
 const initialApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", testScore: "4/5", status: "Pending Review" },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", testScore: "5/5", status: "Interview Scheduled" },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", testScore: "2/5", status: "Rejected" },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", testScore: "3/5", status: "Pending Review" },
-  { id: 5, name: "George Black", email: "george.b@example.com", testScore: "5/5", status: "Offer Extended" },
+  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", testScore: "4/5", status: "Pending Review", role: "Software Engineer" },
+  { id: 2, name: "Diana Smith", email: "diana.s@example.com", testScore: "5/5", status: "Interview Scheduled", role: "Product Manager" },
+  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", testScore: "2/5", status: "Rejected", role: "Data Analyst" },
+  { id: 4, name: "Fiona White", email: "fiona.w@example.com", testScore: "3/5", status: "Pending Review", role: "UX Designer" },
+  { id: 5, name: "George Black", email: "george.b@example.com", testScore: "5/5", status: "Offer Extended", role: "Backend Developer" },
 ];
 
 type Applicant = typeof initialApplicants[0];
@@ -49,19 +49,22 @@ export default function ApplicantsPage() {
     }
   };
 
-  const handleAction = (applicantName: string, action: string) => {
+  const handleAction = (applicant: Applicant, action: string) => {
     if (action === "Send Assessment") {
-      navigator.clipboard.writeText(`${window.location.origin}/assessment`);
+      const url = applicant.role
+        ? `${window.location.origin}/assessment?role=${encodeURIComponent(applicant.role)}`
+        : `${window.location.origin}/assessment`;
+      navigator.clipboard.writeText(url);
       toast({
           title: "Assessment Link Copied!",
-          description: `The link has been copied to your clipboard. Send it to ${applicantName}.`
+          description: `The link has been copied to your clipboard. Send it to ${applicant.name}.`
       });
       return;
     }
     
     toast({
         title: `Action: ${action}`,
-        description: `An email has been sent to ${applicantName}.`
+        description: `An email has been sent to ${applicant.name}.`
     });
   }
 
@@ -129,13 +132,13 @@ export default function ApplicantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                         <DropdownMenuItem onClick={() => handleAction(applicant.name, 'Send Assessment')}>
+                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Assessment')}>
                             <Clipboard className="mr-2 h-4 w-4" /> Send Assessment
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
                             <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
                         </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleAction(applicant.name, 'Send Follow-up')}>
+                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Follow-up')}>
                             <Mail className="mr-2 h-4 w-4" /> Send Follow-up
                         </DropdownMenuItem>
                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected')}>

@@ -1,6 +1,8 @@
+
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -17,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const formSchema = z.object({
-  topic: z.enum(['Logical', 'Tech', 'English']),
+  topic: z.enum(['Logical', 'Tech', 'English', 'Comprehensive']),
   numQuestions: z.coerce.number().int().min(5).max(20),
   timeLimitMinutes: z.coerce.number().int().min(5).max(60),
   difficulty: z.enum(['easy', 'medium', 'hard']),
@@ -90,6 +92,7 @@ export default function AptitudeTestPage() {
                             <SelectItem value="Logical">Logical Reasoning</SelectItem>
                             <SelectItem value="Tech">Technical Skills</SelectItem>
                             <SelectItem value="English">English Proficiency</SelectItem>
+                            <SelectItem value="Comprehensive">Comprehensive</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -197,8 +200,13 @@ export default function AptitudeTestPage() {
                              <Accordion type="multiple" className="w-full space-y-2">
                                 {result.questions.map((q, i) => (
                                     <AccordionItem value={`item-${i}`} key={i} className="bg-muted/30 rounded-md px-4 border-b-0">
-                                        <AccordionTrigger className="text-left">Q{i+1}: {q.question}</AccordionTrigger>
+                                        <AccordionTrigger className="text-left">Q{i+1}: {q.questionText}</AccordionTrigger>
                                         <AccordionContent className="space-y-3">
+                                            {q.questionImage && (
+                                                <div className="my-2 p-2 border rounded-md bg-background">
+                                                    <Image src={q.questionImage} alt={`Puzzle for Q${i+1}`} width={300} height={200} className="rounded-md mx-auto" data-ai-hint="puzzle diagram" />
+                                                </div>
+                                            )}
                                             <ul className="space-y-1">
                                                 {q.options.map((opt, j) => <li key={j} className="text-sm text-muted-foreground ml-4">{opt}</li>)}
                                             </ul>

@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { generateAptitudeTest, type AptitudeTestOutput } from '@/ai/flows/aptitude-test-generator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowRight, CheckCircle, Award, Building, Phone, School } from 'lucide-react';
+import { Loader2, ArrowRight, CheckCircle, Award, Building, Phone, School, PencilRuler, BrainCircuit, BookOpen } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 
@@ -24,12 +26,26 @@ const infoSchema = z.object({
 
 const testSchema = z.object({
   answers: z.array(z.object({
-    question: z.string(),
-    answer: z.string().min(1, "Please select an answer."),
+    answer: z.string({ required_error: "Please select an answer."}).min(1, "Please select an answer."),
   })),
 });
 
-type Stage = 'info' | 'testing' | 'results';
+type Stage = 'info' | 'selection' | 'testing' | 'results';
+
+const TestTypeCard = ({ icon, title, description, onSelect }: { icon: React.ReactNode, title: string, description: string, onSelect: () => void }) => (
+    <button onClick={onSelect} className="w-full text-left">
+        <Card className="hover:border-primary hover:bg-muted/50 transition-all">
+            <CardHeader className="flex flex-row items-center gap-4">
+                {icon}
+                <div>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </div>
+            </CardHeader>
+        </Card>
+    </button>
+);
+
 
 export default function AssessmentPage() {
   const [stage, setStage] = useState<Stage>('info');
@@ -38,6 +54,9 @@ export default function AssessmentPage() {
   const [score, setScore] = useState(0);
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
+
+  const searchParams = useSearchParams();
+  const role = searchParams.get('role');
 
   useEffect(() => {
     setMounted(true);
@@ -50,24 +69,29 @@ export default function AssessmentPage() {
 
   const testForm = useForm<z.infer<typeof testSchema>>({
     resolver: zodResolver(testSchema),
-    defaultValues: { answers: [] },
   });
-  const { replace } = useFieldArray({
+
+  const { fields, replace } = useFieldArray({
     control: testForm.control,
     name: "answers"
   });
 
-  async function onStartTest() {
+  function onInfoSubmit() {
+    setStage('selection');
+  }
+
+  async function onStartTest(topic: "English" | "Logical" | "Tech" | "Comprehensive") {
     setIsLoading(true);
     try {
       const test = await generateAptitudeTest({
-        topic: 'Logical',
+        topic,
+        role: role || undefined,
         numQuestions: 5,
         timeLimitMinutes: 10,
         difficulty: 'medium',
       });
       setTestData(test);
-      replace(test.questions.map(q => ({ question: q.question, answer: '' })));
+      replace(test.questions.map(() => ({ answer: '' })));
       setStage('testing');
       toast({ title: 'Test Started!', description: 'Good luck with your assessment.' });
     } catch (error) {
@@ -114,7 +138,7 @@ export default function AssessmentPage() {
               <CardDescription>Please fill in your details to begin. This test will help us understand your skills better. Good luck!</CardDescription>
             </CardHeader>
             <Form {...infoForm}>
-              <form onSubmit={infoForm.handleSubmit(onStartTest)}>
+              <form onSubmit={infoForm.handleSubmit(onInfoSubmit)}>
                 <CardContent className="space-y-4">
                   <FormField control={infoForm.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
@@ -138,14 +162,35 @@ export default function AssessmentPage() {
                   )} />
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-                    Start Assessment
+                  <Button type="submit" className="w-full">
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    Proceed to Test Selection
                   </Button>
                 </CardFooter>
               </form>
             </Form>
           </Card>
+        )}
+        
+        {stage === 'selection' && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Select Your Assessment</CardTitle>
+                    <CardDescription>Choose the test you would like to take. {role && `The test will be tailored for the ${role} role.`}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isLoading ? <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div> :
+                    <>
+                        <TestTypeCard icon={<BookOpen className="h-8 w-8 text-blue-500" />} title="English Test" description="Assess your language and comprehension skills." onSelect={() => onStartTest('English')} />
+                        <TestTypeCard icon={<BrainCircuit className="h-8 w-8 text-purple-500" />} title="Logical Reasoning Test" description="Challenge your problem-solving abilities." onSelect={() => onStartTest('Logical')} />
+                        <TestTypeCard icon={<PencilRuler className="h-8 w-8 text-green-500" />} title="Comprehensive Test" description="A mix of logical, verbal, and puzzle-based questions." onSelect={() => onStartTest('Comprehensive')} />
+                        {role?.toLowerCase().includes("developer") || role?.toLowerCase().includes("engineer") && (
+                            <TestTypeCard icon={<PencilRuler className="h-8 w-8 text-orange-500" />} title="Technical Test" description="A test focused on technical skills for your role." onSelect={() => onStartTest('Tech')} />
+                        )}
+                    </>
+                    }
+                </CardContent>
+            </Card>
         )}
 
         {stage === 'testing' && testData && (
@@ -157,29 +202,37 @@ export default function AssessmentPage() {
             <Form {...testForm}>
               <form onSubmit={testForm.handleSubmit(onSubmitTest)}>
                 <CardContent className="space-y-8">
-                  {testData.questions.map((q, index) => (
-                    <FormField
-                      key={index}
-                      control={testForm.control}
-                      name={`answers.${index}.answer`}
-                      render={({ field }) => (
-                        <FormItem className="space-y-3">
-                          <FormLabel className="font-semibold">Q{index + 1}: {q.question}</FormLabel>
-                          <FormControl>
-                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                              {q.options.map((opt, i) => (
-                                <FormItem key={i} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted">
-                                  <FormControl><RadioGroupItem value={opt} id={`${index}-${i}`} /></FormControl>
-                                  <FormLabel htmlFor={`${index}-${i}`} className="font-normal cursor-pointer w-full">{opt}</FormLabel>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                  {fields.map((field, index) => {
+                    const q = testData.questions[index];
+                    return (
+                        <FormField
+                        key={field.id}
+                        control={testForm.control}
+                        name={`answers.${index}.answer`}
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                            <FormLabel className="font-semibold">Q{index + 1}: {q.questionText}</FormLabel>
+                            {q.questionImage && (
+                                <div className="my-2 p-2 border rounded-md bg-white">
+                                    <Image src={q.questionImage} alt={`Puzzle for Q${index+1}`} width={300} height={200} className="rounded-md mx-auto" data-ai-hint="puzzle diagram" />
+                                </div>
+                            )}
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                {q.options.map((opt, i) => (
+                                    <FormItem key={i} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted">
+                                    <FormControl><RadioGroupItem value={opt} id={`${index}-${i}`} /></FormControl>
+                                    <FormLabel htmlFor={`${index}-${i}`} className="font-normal cursor-pointer w-full">{opt}</FormLabel>
+                                    </FormItem>
+                                ))}
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )
+                  })}
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="w-full">
