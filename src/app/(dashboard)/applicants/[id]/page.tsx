@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Phone, Building, Briefcase, FileText, Keyboard, Percent, CalendarPlus, UserX, Star, Loader2, Badge } from "lucide-react"
+import { User, Mail, Phone, Building, Briefcase, FileText, Keyboard, CalendarPlus, UserX, Star, Loader2, Badge, Send } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 
 // In a real app, this data would be fetched from an API
 const allApplicants = [
@@ -44,9 +43,14 @@ export default function ApplicantProfilePage() {
     }, [params.id]);
 
     const handleAction = (action: string) => {
+        // In a real app, this would trigger a backend update to set applicant.assignedTest
+        const portalLink = `${window.location.origin}/portal/${applicant?.id}`;
+        
+        navigator.clipboard.writeText(portalLink);
+
         toast({
-            title: "Action Triggered",
-            description: `Simulated action: ${action} for ${applicant?.name}`
+            title: `Assessment Assigned & Link Copied`,
+            description: `Simulated: ${action} assigned to ${applicant?.name}. The portal link has been copied to your clipboard. Please send it to the candidate.`
         })
     }
     
@@ -79,8 +83,8 @@ export default function ApplicantProfilePage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleAction("Schedule Interview")}><CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview</Button>
-                    <Button variant="destructive" onClick={() => handleAction("Reject Candidate")}><UserX className="mr-2 h-4 w-4" /> Reject</Button>
+                    <Button variant="outline" onClick={() => handleAction("Aptitude Test")}><FileText className="mr-2 h-4 w-4" /> Assign Aptitude Test</Button>
+                    <Button variant="outline" onClick={() => handleAction("Typing Test")}><Keyboard className="mr-2 h-4 w-4" /> Assign Typing Test</Button>
                 </div>
             </div>
 

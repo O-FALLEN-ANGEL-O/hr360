@@ -15,21 +15,30 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, Mail, Check, X, CalendarPlus, Clipboard, User, FileText, Keyboard } from "lucide-react"
+import { MoreHorizontal, User, PlusCircle } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { NewApplicantForm } from "@/components/new-applicant-form"
 
 const initialApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support", aptitudeScore: "4/5", typingWPM: 75, typingAccuracy: 96 },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", status: "Interview Scheduled", role: "Product Manager", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst", aptitudeScore: "2/5", typingWPM: null, typingAccuracy: null },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer", aptitudeScore: "3/5", typingWPM: null, typingAccuracy: null },
-  { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null },
+  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support" },
+  { id: 2, name: "Diana Smith", email: "diana.s@example.com", status: "Interview Scheduled", role: "Product Manager" },
+  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst" },
+  { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer" },
+  { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer" },
 ];
 
 type Applicant = typeof initialApplicants[0];
@@ -38,6 +47,7 @@ type Status = "Pending Review" | "Interview Scheduled" | "Rejected" | "Offer Ext
 
 export default function ApplicantsPage() {
   const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const getStatusBadgeVariant = (status: Status) => {
@@ -50,55 +60,45 @@ export default function ApplicantsPage() {
     }
   };
 
-  const handleAction = (applicant: Applicant, action: string) => {
-    let url = '';
-    let message = '';
-
-    if (action === "Send Aptitude Test") {
-      url = applicant.role
-        ? `${window.location.origin}/assessment?role=${encodeURIComponent(applicant.role)}`
-        : `${window.location.origin}/assessment`;
-      message = "Aptitude test link copied to clipboard."
-    } else if (action === "Send Typing Test") {
-      url = `${window.location.origin}/typing-test?id=${applicant.id}`;
-      message = "Typing test link copied to clipboard.";
-    }
-    
-    if(url) {
-        navigator.clipboard.writeText(url);
-        toast({
-            title: "Link Copied!",
-            description: `${message} Send it to ${applicant.name}.`
-        });
-    }
-  }
-
-  const handleStatusChange = (applicantId: number, newStatus: Status) => {
-    setApplicants(
-      applicants.map((app) =>
-        app.id === applicantId ? { ...app, status: newStatus } : app
-      )
-    );
-    
-    if (newStatus === 'Interview Scheduled') {
-        toast({
-            title: "Status Updated!",
-            description: `Applicant status changed to ${newStatus}. A calendar invite has been sent.`
-        });
-    } else {
-        toast({
-            title: "Status Updated!",
-            description: `Applicant status changed to ${newStatus}.`
-        });
-    }
-  }
+  const handleAddApplicant = (data: { fullName: string, email: string }) => {
+    const newId = applicants.length > 0 ? Math.max(...applicants.map(a => a.id)) + 1 : 1;
+    const newApplicant = {
+        id: newId,
+        name: data.fullName,
+        email: data.email,
+        status: "Pending Review" as Status,
+        role: "To Be Determined",
+    };
+    setApplicants(prev => [newApplicant, ...prev]);
+    setIsDialogOpen(false);
+    toast({
+        title: "Applicant Added!",
+        description: `${data.fullName} has been added to the system with ID APP-00${newId}.`
+    });
+  };
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Candidate Management"
-        description="Review and manage candidates who have applied or completed assessments."
+        description="Review and manage all candidates in the pipeline."
       />
+       <div className="flex justify-end">
+         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+           <DialogTrigger asChild>
+             <Button><PlusCircle className="mr-2 h-4 w-4" /> Register Walk-in Applicant</Button>
+           </DialogTrigger>
+           <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>New Applicant Registration</DialogTitle>
+                <DialogDescription>
+                    Use this form to register a new walk-in applicant. The AI will help you fill out the details.
+                </DialogDescription>
+              </DialogHeader>
+              <NewApplicantForm onApplicantAdd={handleAddApplicant} />
+           </DialogContent>
+         </Dialog>
+       </div>
       <Card>
         <CardHeader>
           <CardTitle>All Applicants</CardTitle>
@@ -137,18 +137,6 @@ export default function ApplicantsPage() {
                            <Link href={`/applicants/${applicant.id}`}>
                                <User className="mr-2 h-4 w-4" /> View Profile
                            </Link>
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Aptitude Test')}>
-                            <FileText className="mr-2 h-4 w-4" /> Send Aptitude Test
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleAction(applicant, 'Send Typing Test')}>
-                            <Keyboard className="mr-2 h-4 w-4" /> Send Typing Test
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled')}>
-                            <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
-                        </DropdownMenuItem>
-                         <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected')}>
-                            <X className="mr-2 h-4 w-4" /> Reject Candidate
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
