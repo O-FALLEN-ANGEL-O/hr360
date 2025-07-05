@@ -1,9 +1,33 @@
-import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle } from "lucide-react";
+"use client"
 
-const workflows = [
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { PageHeader } from "@/components/page-header"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useToast } from "@/hooks/use-toast"
+
+const workflowSchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters."),
+  description: z.string().min(10, "Description is required."),
+})
+
+const initialWorkflows = [
   {
     title: "New Employee Onboarding",
     icon: <UserPlus className="h-8 w-8 text-green-500" />,
@@ -39,7 +63,41 @@ const workflows = [
   }
 ];
 
+type Workflow = typeof initialWorkflows[0];
+
 export default function WorkflowsPage() {
+  const [workflows, setWorkflows] = useState<Workflow[]>(initialWorkflows);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof workflowSchema>>({
+    resolver: zodResolver(workflowSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof workflowSchema>) {
+    const newWorkflow: Workflow = {
+      title: values.title,
+      description: values.description,
+      icon: <PlusCircle className="h-8 w-8 text-gray-500" />, // Default icon for new workflows
+      steps: [
+        { name: "Step 1: Define", icon: <Clock className="text-yellow-500" />, done: false },
+        { name: "Step 2: Assign", icon: <Clock className="text-yellow-500" />, done: false },
+        { name: "Step 3: Activate", icon: <Clock className="text-yellow-500" />, done: false },
+      ]
+    };
+    setWorkflows(prev => [...prev, newWorkflow]);
+    toast({
+      title: "Workflow Created!",
+      description: `The "${values.title}" workflow has been added.`,
+    });
+    form.reset();
+    setIsDialogOpen(false);
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -47,10 +105,51 @@ export default function WorkflowsPage() {
         description="Visualize and manage automated HR processes for efficiency and consistency."
       />
       <div className="flex justify-end">
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Workflow
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New Workflow
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <DialogHeader>
+                  <DialogTitle>Create New Workflow</DialogTitle>
+                  <DialogDescription>
+                    Define a new automated process. You can add steps later.
+                  </DialogDescription>
+                </DialogHeader>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workflow Title</FormLabel>
+                      <FormControl><Input placeholder="e.g., Performance Review Cycle" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl><Textarea placeholder="What is this workflow for?" rows={3} {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit">Create Workflow</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         {workflows.map((workflow, index) => (
