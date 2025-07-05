@@ -16,7 +16,7 @@ const AiEmailResponderInputSchema = z.object({
   jobTitle: z.string().describe('The title of the job being applied for.'),
   companyName: z.string().describe('The name of the company.'),
   recipientEmail: z.string().email().describe('The email address of the applicant.'),
-  communicationContext: z.enum(['Invitation to Interview', 'Polite Rejection', 'Request for Information']).describe('The context of the communication.'),
+  communicationContext: z.enum(['Invitation to Interview', 'Polite Rejection', 'Request for Information', 'Offer Extended']).describe('The context of the communication.'),
 });
 
 export type AiEmailResponderInput = z.infer<typeof AiEmailResponderInputSchema>;
@@ -51,6 +51,7 @@ Based on the context, please generate the full email content, including an appro
 - If the context is 'Invitation to Interview', the email should be enthusiastic and clear, suggesting next steps for scheduling.
 - If the context is 'Polite Rejection', the email must be empathetic and respectful, thanking the applicant for their interest and time, while clearly stating that they will not be moving forward in the process. Do not give false hope.
 - If the context is 'Request for Information', clearly state what additional information is needed from the applicant.
+- If the context is 'Offer Extended', the email should be celebratory and professional, formally extending the job offer and outlining the next steps for acceptance.
 `,
 });
 

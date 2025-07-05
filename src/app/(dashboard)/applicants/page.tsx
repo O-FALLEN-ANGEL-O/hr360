@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { MoreHorizontal, User, Mail, Loader2, Link2, Power } from "lucide-react"
+import { MoreHorizontal, User, Mail, Loader2, Link2, Power, CalendarPlus, FileCheck, UserX } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
 
 const initialApplicants = [
   { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support", source: "Email" },
@@ -52,6 +53,7 @@ export default function ApplicantsPage() {
   const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
   const [isScanning, setIsScanning] = useState(false);
   const [isDriveMode, setIsDriveMode] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState<number | null>(null);
   const driveModeInterval = useRef<NodeJS.Timeout | null>(null);
   const availableApplicants = useRef([...newScannedApplicantsPool]);
   const { toast } = useToast();
@@ -118,6 +120,47 @@ export default function ApplicantsPage() {
     });
   };
 
+  const handleStatusChange = async (
+    applicantId: number, 
+    newStatus: Status, 
+    context: 'Invitation to Interview' | 'Offer Extended' | 'Polite Rejection'
+  ) => {
+    const applicant = applicants.find(a => a.id === applicantId);
+    if (!applicant) return;
+    
+    setIsSendingEmail(applicantId);
+    
+    try {
+        await aiEmailResponder({
+            applicantName: applicant.name,
+            jobTitle: applicant.role,
+            recipientEmail: applicant.email,
+            communicationContext: context,
+            companyName: "HR360+ Platform Inc."
+        });
+        
+        setApplicants(prev => prev.map(a => 
+            a.id === applicantId ? { ...a, status: newStatus } : a
+        ));
+        
+        toast({
+            title: "Email Sent!",
+            description: `A ${context.toLowerCase()} email has been automatically sent to ${applicant.name}.`,
+        });
+
+    } catch (error) {
+        console.error("Error sending email:", error);
+        toast({
+            title: "Error",
+            description: "Failed to send email. Please try again from the AI Email Composer.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSendingEmail(null);
+    }
+  }
+
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -176,21 +219,34 @@ export default function ApplicantsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                           <Link href={`/applicants/${applicant.id}`}>
-                               <User className="mr-2 h-4 w-4" /> View Profile
-                           </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {isSendingEmail === applicant.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                            <Link href={`/applicants/${applicant.id}`}>
+                                <User className="mr-2 h-4 w-4" /> View Profile
+                            </Link>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled', 'Invitation to Interview')}>
+                                <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Offer Extended', 'Offer Extended')}>
+                                <FileCheck className="mr-2 h-4 w-4" /> Extend Offer
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected', 'Polite Rejection')}>
+                                <UserX className="mr-2 h-4 w-4" /> Reject Candidate
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
