@@ -35,13 +35,13 @@ export default function AnalyticsPage() {
     }
     
     try {
-      const mockInput = {
-        companyData: "Aggregated data: 500 employees, avg tenure 3.5 yrs, 15% turnover last year. Performance reviews avg 3.8/5. Sales dept shows highest exit rate.",
-        industryBenchmarks: "Industry avg attrition is 18%. Salary for developers is benchmarked at $120k.",
-        economicIndicators: "Tech market is growing, leading to higher competition for talent.",
-      };
-      const response = await generatePredictiveAnalyticsDashboard(mockInput);
-      setResult(response);
+      // Fetch real data from backend API
+      const response = await fetch('/api/analytics');
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
+      const data = await response.json();
+      setResult(data);
       if (isRefresh) {
          toast({
             title: "Analytics Refreshed!",
