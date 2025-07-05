@@ -17,7 +17,10 @@ import {
   ClipboardList,
   GanttChartSquare,
   UserCheck,
-  Trophy
+  Trophy,
+  GraduationCap,
+  Sparkles,
+  School
 } from "lucide-react"
 
 import {
@@ -61,6 +64,11 @@ export function DashboardNav() {
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/job-archive")}>
               <Link href="/job-archive">Job Archive</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/campus-hr")}>
+              <Link href="/campus-hr">Campus HR</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
@@ -124,6 +132,11 @@ export function DashboardNav() {
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
               <Link href="/skill-gap">Skill Gap Map</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/career-growth")}>
+              <Link href="/career-growth">Career Growth Predictor</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         </SidebarMenuSub>

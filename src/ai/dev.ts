@@ -11,3 +11,4 @@ import '@/ai/flows/gpt-powered-match-score.ts';
 import '@/ai/flows/aptitude-test-generator.ts';
 import '@/ai/flows/culture-fit-predictor.ts';
 import '@/ai/flows/ai-email-responder.ts';
+import '@/ai/flows/career-growth-predictor.ts';
