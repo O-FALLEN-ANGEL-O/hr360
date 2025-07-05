@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
 import { useToast } from "@/hooks/use-toast"
+import { Progress } from "@/components/ui/progress"
 
 const formSchema = z.object({
   jobDescription: z.string().min(50, { message: "Job description must be at least 50 characters." }),
@@ -23,14 +24,16 @@ const formSchema = z.object({
   jobTitle: z.string().min(2, { message: "Job title is required." }),
   recipientEmail: z.string().email(),
   senderName: z.string().min(2, { message: "Your name is required." }),
-  senderEmail: z.string().email(),
+  senderEmail: z.string().email({ message: "A valid sender email is required."}),
   customSignature: z.string().min(10, { message: "A signature is required." }),
 })
 
 export default function AiEmailResponderPage() {
   const [generatedEmail, setGeneratedEmail] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [progress, setProgress] = useState(0)
   const { toast } = useToast()
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,9 +50,32 @@ export default function AiEmailResponderPage() {
     },
   })
 
+  const startProgress = () => {
+    const DURATION = 15; // Approximate seconds for generation
+    const intervalTime = (DURATION * 1000) / 100;
+    intervalRef.current = setInterval(() => {
+        setProgress(prev => {
+            if (prev >= 99) {
+                clearInterval(intervalRef.current!);
+                return 99;
+            }
+            return prev + 1;
+        });
+    }, intervalTime);
+  }
+
+  const stopProgress = () => {
+    if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+    }
+    setProgress(100);
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     setGeneratedEmail("")
+    setProgress(0)
+    startProgress()
     try {
       const result = await aiEmailResponder({
         ...values,
@@ -69,6 +95,7 @@ export default function AiEmailResponderPage() {
       })
     } finally {
       setIsLoading(false)
+      stopProgress()
     }
   }
 
@@ -163,6 +190,17 @@ export default function AiEmailResponderPage() {
                 />
                 <FormField
                   control={form.control}
+                  name="senderEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Email</FormLabel>
+                      <FormControl><Input type="email" placeholder="e.g., jane.doe@example.com" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="customSignature"
                   render={({ field }) => (
                     <FormItem>
@@ -196,20 +234,22 @@ export default function AiEmailResponderPage() {
                 <CardTitle>Generated Email</CardTitle>
                 <CardDescription>Review the AI-generated email below.</CardDescription>
             </div>
-            <Button variant="outline" size="icon" onClick={handleCopyToClipboard} disabled={!generatedEmail}>
+            <Button variant="outline" size="icon" onClick={handleCopyToClipboard} disabled={!generatedEmail || isLoading}>
                 <Clipboard className="h-4 w-4" />
             </Button>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             {isLoading && (
               <div className="flex flex-1 items-center justify-center">
-                <div className="text-center space-y-2">
-                    <Bot className="mx-auto h-12 w-12 text-muted-foreground animate-bounce" />
-                    <p className="text-muted-foreground">AI is crafting your email...</p>
+                <div className="text-center space-y-4 w-4/5">
+                    <Bot className="mx-auto h-12 w-12 text-muted-foreground animate-pulse" />
+                    <p className="text-muted-foreground">AI is crafting your email... ({Math.round(progress)}%)</p>
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-xs text-muted-foreground">This should take about 15 seconds.</p>
                 </div>
               </div>
             )}
-            {generatedEmail && (
+            {!isLoading && generatedEmail && (
               <div className="prose prose-sm max-w-none flex-1 rounded-md border bg-muted/50 p-4 whitespace-pre-wrap font-sans">
                 {generatedEmail}
               </div>
