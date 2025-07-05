@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -81,15 +82,6 @@ export default function ApplicantsPage() {
         title="Candidate Assessments"
         description="Review and manage candidates who have completed their initial assessment."
       />
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={() => {
-            const assessmentUrl = new URL('/assessment', window.location.origin).href;
-            navigator.clipboard.writeText(assessmentUrl);
-            toast({title: "Link Copied!", description: "Assessment link copied to clipboard."})
-        }}>
-            Copy Assessment Link
-        </Button>
-      </div>
       <Card>
         <CardHeader>
           <CardTitle>Applicant Submissions</CardTitle>
