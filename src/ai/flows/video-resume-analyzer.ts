@@ -45,6 +45,7 @@ export async function analyzeVideoResume(
 
 const prompt = ai.definePrompt({
   name: 'analyzeVideoResumePrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: AnalyzeVideoResumeInputSchema},
   output: {schema: AnalyzeVideoResumeOutputSchema},
   prompt: `You are an expert HR video resume analyzer.

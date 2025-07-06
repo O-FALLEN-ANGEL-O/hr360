@@ -34,6 +34,7 @@ export async function processResume(input: ProcessResumeInput): Promise<ProcessR
 
 const processResumePrompt = ai.definePrompt({
   name: 'processResumePrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: ProcessResumeInputSchema},
   output: {schema: ProcessResumeOutputSchema},
   prompt: `You are an expert HR data entry assistant specializing in processing resumes from images, which may be of poor quality (e.g., skewed, poorly lit, or containing background noise). Your task is to intelligently analyze the provided resume image, perform any necessary corrections in your interpretation to read the text accurately, and extract key information.
@@ -54,7 +55,7 @@ const processResumeFlow = ai.defineFlow(
     outputSchema: ProcessResumeOutputSchema,
   },
   async input => {
-    const {output} = await processResumePrompt(input);
+    const {output} = await prompt(input);
     return output!;
   }
 );
