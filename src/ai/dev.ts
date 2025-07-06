@@ -13,3 +13,4 @@ import '@/ai/flows/culture-fit-predictor.ts';
 import '@/ai/flows/ai-email-responder.ts';
 import '@/ai/flows/career-growth-predictor.ts';
 import '@/ai/flows/resume-processor.ts';
+import '@/ai/flows/typing-test-generator.ts';
