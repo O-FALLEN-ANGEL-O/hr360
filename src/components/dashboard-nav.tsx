@@ -27,7 +27,8 @@ import {
   Network,
   Users2,
   UserCog,
-  ShieldQuestion
+  ShieldQuestion,
+  Radar
 } from "lucide-react"
 
 import {
@@ -74,8 +75,8 @@ export function DashboardNav() {
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
-              <Link href="/skill-gap">Internship Aggregator</Link>
+            <SidebarMenuSubButton asChild isActive={isActive("/internship-aggregator")}>
+              <Link href="/internship-aggregator">Internship Aggregator</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
@@ -108,8 +109,8 @@ export function DashboardNav() {
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
-            <SidebarMenuSubButton asChild isActive={isActive("/ai-responder")}>
-              <Link href="/ai-responder">AI Email Composer</Link>
+            <SidebarMenuSubButton asChild isActive={isActive("/ai-email-composer")}>
+              <Link href="/ai-email-composer">AI Email Composer</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
           <SidebarMenuSubItem>
@@ -134,6 +135,11 @@ export function DashboardNav() {
           <SidebarMenuSubItem>
             <SidebarMenuSubButton asChild isActive={isActive("/career-growth")}>
               <Link href="/career-growth">Career Path Predictor</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+           <SidebarMenuSubItem>
+            <SidebarMenuSubButton asChild isActive={isActive("/skill-gap")}>
+              <Link href="/skill-gap">Skill Gap Map</Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
            <SidebarMenuSubItem>
