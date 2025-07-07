@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useEffect, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -22,6 +23,7 @@ const profileFormSchema = z.object({
 export default function SettingsPage() {
   const { toast } = useToast()
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -30,6 +32,7 @@ export default function SettingsPage() {
     
     setIsDarkMode(darkMode)
     root.classList.toggle('dark', darkMode)
+    setMounted(true)
   }, [])
 
   const handleThemeChange = (checked: boolean) => {
@@ -56,6 +59,48 @@ export default function SettingsPage() {
       title: "Profile Updated",
       description: "Your profile information has been saved.",
     })
+  }
+  
+  if (!mounted) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title="Settings"
+          description="Manage your account settings and theme preferences."
+        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+            <CardDescription>This is how others will see you on the site.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-8 max-w-lg">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="space-y-2">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <Skeleton className="h-10 w-32" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Customize the look and feel of the application.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-6 w-11 rounded-full" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

@@ -33,6 +33,12 @@ graph TD
 
 ---
 
+## Deployment
+
+To deploy this application to a hosting provider like Vercel, you **must** configure the environment variables correctly. Please see the detailed instructions in [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+---
+
 ## Key Features & Modules
 
 The platform is organized into intuitive modules that mirror the core functions of a high-performing HR department.
