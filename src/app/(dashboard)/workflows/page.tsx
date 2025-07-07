@@ -1,14 +1,14 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle, BellRing, Hourglass, type LucideIcon, BookUser } from "lucide-react"
+import { ArrowRight, Check, Clock, Mail, UserPlus, UserX, PlusCircle, BellRing, Hourglass, type LucideIcon, BookUser, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -23,15 +23,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { supabase } from "@/lib/supabaseClient"
+import type { Workflow } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const workflowSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
   description: z.string().min(10, "Description is required."),
 })
 
-type IconName = "UserPlus" | "UserX" | "Clock" | "Mail" | "Check" | "Hourglass" | "BellRing" | "PlusCircle";
-
-const iconMap: { [key in IconName]: LucideIcon } = {
+const iconMap: { [key: string]: LucideIcon } = {
   UserPlus,
   UserX,
   Clock,
@@ -41,59 +42,6 @@ const iconMap: { [key in IconName]: LucideIcon } = {
   BellRing,
   PlusCircle,
 };
-
-const initialWorkflows = [
-  {
-    title: "New Employee Onboarding",
-    icon: "UserPlus" as const,
-    iconColor: "text-green-500",
-    description: "Automated workflow for welcoming new hires, from offer acceptance to first-day setup.",
-    steps: [
-      { name: "Send Welcome Email", icon: "Mail" as const, done: true },
-      { name: "IT Equipment Provisioning", icon: "Clock" as const, done: false },
-      { name: "Create System Accounts", icon: "Clock" as const, done: false },
-      { name: "Schedule Orientation", icon: "Check" as const, done: true },
-    ]
-  },
-  {
-    title: "48-Hour Unseen Resume Alert",
-    icon: "Hourglass" as const,
-    iconColor: "text-blue-500",
-    description: "If a resume is unseen for 48 hours, this workflow sends an apology and alerts HR.",
-    steps: [
-      { name: "Monitor Unseen Resumes", icon: "Check" as const, done: true },
-      { name: "Trigger After 48 Hours", icon: "Clock" as const, done: false },
-      { name: "Send Auto-Apology Email", icon: "Mail" as const, done: false },
-      { name: "Alert HR Team", icon: "BellRing" as const, done: false },
-    ]
-  },
-  {
-    title: "Employee Offboarding",
-    icon: "UserX" as const,
-    iconColor: "text-red-500",
-    description: "A streamlined process for employee exits, ensuring all assets are recovered and access is revoked.",
-    steps: [
-      { name: "Conduct Exit Interview", icon: "Check" as const, done: true },
-      { name: "Deactivate Accounts", icon: "Check" as const, done: true },
-      { name: "Final Payroll Processing", icon: "Clock" as const, done: false },
-      { name: "Collect Company Assets", icon: "Clock" as const, done: false },
-    ]
-  },
-  {
-    title: "Leave Approval Process",
-    icon: "Clock" as const,
-    iconColor: "text-yellow-500",
-    description: "A multi-step approval workflow for employee leave requests.",
-    steps: [
-      { name: "Employee Submits Request", icon: "Check" as const, done: true },
-      { name: "Manager Approval", icon: "Clock" as const, done: false },
-      { name: "HR Confirmation", icon: "Clock" as const, done: false },
-      { name: "Update Calendar", icon: "Clock" as const, done: false },
-    ]
-  }
-];
-
-type Workflow = typeof initialWorkflows[0];
 
 const UserGuideContent = () => (
     <div className="space-y-6 text-sm">
@@ -165,7 +113,8 @@ const UserGuideContent = () => (
 );
 
 export default function WorkflowsPage() {
-  const [workflows, setWorkflows] = useState<Workflow[]>(initialWorkflows);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { toast } = useToast();
@@ -178,25 +127,65 @@ export default function WorkflowsPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof workflowSchema>) {
-    const newWorkflow: Workflow = {
+  const fetchWorkflows = useCallback(async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('workflows')
+      .select('*, steps:workflow_steps(*)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching workflows:", error);
+      toast({ title: "Error", description: "Could not fetch workflows.", variant: "destructive" });
+    } else {
+      setWorkflows((data as Workflow[]) || []);
+    }
+    setIsLoading(false);
+  }, [toast]);
+
+  useEffect(() => {
+    fetchWorkflows();
+  }, [fetchWorkflows]);
+
+  async function onSubmit(values: z.infer<typeof workflowSchema>) {
+    const newWorkflowData = {
       title: values.title,
       description: values.description,
       icon: "PlusCircle",
-      iconColor: "text-gray-500",
-      steps: [
-        { name: "Step 1: Define", icon: "Clock", done: false },
-        { name: "Step 2: Assign", icon: "Clock", done: false },
-        { name: "Step 3: Activate", icon: "Clock", done: false },
-      ]
+      icon_color: "text-gray-500",
     };
-    setWorkflows(prev => [...prev, newWorkflow]);
-    toast({
-      title: "Workflow Created!",
-      description: `The "${values.title}" workflow has been added.`,
-    });
+
+    const { data: newWorkflow, error } = await supabase
+      .from('workflows')
+      .insert(newWorkflowData)
+      .select()
+      .single();
+
+    if (error || !newWorkflow) {
+      toast({ title: "Error", description: "Failed to create workflow.", variant: "destructive" });
+      return;
+    }
+
+    const defaultSteps = [
+      { workflow_id: newWorkflow.id, name: "Step 1: Define", icon: "Clock", done: false },
+      { workflow_id: newWorkflow.id, name: "Step 2: Assign", icon: "Clock", done: false },
+      { workflow_id: newWorkflow.id, name: "Step 3: Activate", icon: "Clock", done: false },
+    ];
+    
+    const { error: stepsError } = await supabase.from('workflow_steps').insert(defaultSteps);
+
+    if (stepsError) {
+      toast({ title: "Warning", description: "Workflow created, but failed to add default steps.", variant: "destructive" });
+    } else {
+      toast({
+        title: "Workflow Created!",
+        description: `The "${values.title}" workflow has been added.`,
+      });
+    }
+
     form.reset();
     setIsDialogOpen(false);
+    fetchWorkflows();
   }
 
   return (
@@ -245,7 +234,10 @@ export default function WorkflowsPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Create Workflow</Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Workflow
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -253,7 +245,6 @@ export default function WorkflowsPage() {
         </Dialog>
       </div>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-        {/* User Guide Card */}
         <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
             <DialogTrigger asChild>
                 <Card className="flex flex-col cursor-pointer hover:border-primary transition-colors order-first">
@@ -294,42 +285,52 @@ export default function WorkflowsPage() {
             </DialogContent>
         </Dialog>
 
-        {workflows.map((workflow, index) => {
-           const MainIcon = iconMap[workflow.icon];
-           return (
-            <Card key={index} className="flex flex-col">
-              <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-                <div className="flex-shrink-0">
-                    <MainIcon className={`h-8 w-8 ${workflow.iconColor}`} />
-                </div>
-                <div className="flex-grow">
-                  <CardTitle>{workflow.title}</CardTitle>
-                  <CardDescription className="mt-1">{workflow.description}</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <ul className="space-y-3">
-                  {workflow.steps.map((step, stepIndex) => {
-                    const StepIcon = iconMap[step.icon];
-                    return (
-                        <li key={stepIndex} className="flex items-center gap-3">
-                            <div className={`flex h-6 w-6 items-center justify-center rounded-full ${step.done ? "bg-green-100 dark:bg-green-900/20" : "bg-yellow-100 dark:bg-yellow-900/20"}`}>
-                                <StepIcon className={`h-4 w-4 ${step.done ? "text-green-600" : "text-yellow-600"}`} />
-                            </div>
-                            <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : ""}`}>{step.name}</span>
-                        </li>
-                    )
-                  })}
-                </ul>
-              </CardContent>
-              <div className="border-t p-4">
-                <Button variant="outline" className="w-full">
-                  View Details <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
+              <CardContent><Skeleton className="h-24 w-full" /></CardContent>
+              <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
             </Card>
-           )
-        })}
+          ))
+        ) : (
+          workflows.map((workflow) => {
+            const MainIcon = iconMap[workflow.icon] || PlusCircle;
+            return (
+              <Card key={workflow.id} className="flex flex-col">
+                <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+                  <div className="flex-shrink-0">
+                      <MainIcon className={`h-8 w-8 ${workflow.icon_color}`} />
+                  </div>
+                  <div className="flex-grow">
+                    <CardTitle>{workflow.title}</CardTitle>
+                    <CardDescription className="mt-1">{workflow.description}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <ul className="space-y-3">
+                    {workflow.steps?.map((step, stepIndex) => {
+                      const StepIcon = iconMap[step.icon] || Clock;
+                      return (
+                          <li key={stepIndex} className="flex items-center gap-3">
+                              <div className={`flex h-6 w-6 items-center justify-center rounded-full ${step.done ? "bg-green-100 dark:bg-green-900/20" : "bg-yellow-100 dark:bg-yellow-900/20"}`}>
+                                  <StepIcon className={`h-4 w-4 ${step.done ? "text-green-600" : "text-yellow-600"}`} />
+                              </div>
+                              <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : ""}`}>{step.name}</span>
+                          </li>
+                      )
+                    })}
+                  </ul>
+                </CardContent>
+                <div className="border-t p-4">
+                  <Button variant="outline" className="w-full">
+                    View Details <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            )
+          })
+        )}
       </div>
     </div>
   );

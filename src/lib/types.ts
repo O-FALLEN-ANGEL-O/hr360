@@ -244,7 +244,7 @@ export type Database = {
           description?: string | null
           is_anonymous?: boolean
           status?: "Open" | "In Progress" | "Resolved" | "Closed"
-          ticket_id?: string
+          ticket_id: string
           title: string
         }
         Update: {
@@ -361,6 +361,64 @@ export type Database = {
         }
         Relationships: []
       }
+      workflows: {
+        Row: {
+          id: number
+          created_at: string
+          title: string
+          description: string
+          icon: string
+          icon_color: string
+        }
+        Insert: {
+          id?: number
+          created_at?: string
+          title: string
+          description: string
+          icon: string
+          icon_color: string
+        }
+        Update: {
+          id?: number
+          created_at?: string
+          title?: string
+          description?: string
+          icon?: string
+          icon_color?: string
+        }
+        Relationships: []
+      }
+      workflow_steps: {
+        Row: {
+          id: number
+          workflow_id: number
+          name: string
+          icon: string
+          done: boolean
+        }
+        Insert: {
+          id?: number
+          workflow_id: number
+          name: string
+          icon: string
+          done?: boolean
+        }
+        Update: {
+          id?: number
+          workflow_id?: number
+          name?: string
+          icon?: string
+          done?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -467,5 +525,5 @@ export type College = Tables<'colleges'>
 export type Document = Tables<'documents'>
 export type Grievance = Tables<'grievances'>
 export type Kudo = Tables<'kudos'>
-
-    
+export type WorkflowStep = Tables<'workflow_steps'>
+export type Workflow = Tables<'workflows'> & { steps: WorkflowStep[] }
