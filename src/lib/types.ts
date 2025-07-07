@@ -40,6 +40,7 @@ export type Database = {
       applicants: {
         Row: {
           aptitude_score: string | null
+          assigned_test: "aptitude" | "typing" | null
           college: string | null
           created_at: string
           email: string
@@ -65,6 +66,7 @@ export type Database = {
         }
         Insert: {
           aptitude_score?: string | null
+          assigned_test?: "aptitude" | "typing" | null
           college?: string | null
           created_at?: string
           email: string
@@ -90,6 +92,7 @@ export type Database = {
         }
         Update: {
           aptitude_score?: string | null
+          assigned_test?: "aptitude" | "typing" | null
           college?: string | null
           created_at?: string
           email?: string

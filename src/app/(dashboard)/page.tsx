@@ -84,7 +84,7 @@ export default function DashboardPage() {
     const fetchData = async () => {
         setIsLoading(true);
 
-        const jobsPromise = supabase.from('jobs').select('*').limit(5);
+        const jobsPromise = supabase.from('jobs').select('*').not('status', 'eq', 'Closed').order('created_at', { ascending: false }).limit(5);
         const applicantsPromise = supabase.from('applicants').select('status');
         const employeeCountPromise = supabase.from('employees').select('*', { count: 'exact', head: true });
         const openPositionsPromise = supabase.from('jobs').select('*', { count: 'exact', head: true }).not('status', 'eq', 'Closed');
