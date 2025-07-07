@@ -33,7 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { Grievance } from "@/lib/types"
 import { format } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -60,6 +60,7 @@ export default function GrievanceHubPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof ticketSchema>>({
     resolver: zodResolver(ticketSchema),
@@ -85,6 +86,7 @@ export default function GrievanceHubPage() {
 
   useEffect(() => {
     fetchTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSubmit(values: z.infer<typeof ticketSchema>) {

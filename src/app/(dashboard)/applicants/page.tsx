@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { Applicant } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -39,6 +39,7 @@ export default function ApplicantsPage() {
   const [isSendingEmail, setIsSendingEmail] = useState<number | null>(null);
   const driveModeInterval = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const fetchApplicants = useCallback(async (showToast = false) => {
     if (!showToast) setIsLoading(true);
@@ -60,10 +61,11 @@ export default function ApplicantsPage() {
     }
     setIsLoading(false);
     setIsScanning(false);
-  }, [toast, applicants.length]);
+  }, [toast, applicants.length, supabase]);
 
   useEffect(() => {
     fetchApplicants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

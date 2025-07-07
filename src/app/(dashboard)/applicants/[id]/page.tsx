@@ -10,7 +10,7 @@ import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, Messag
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { Applicant } from "@/lib/types"
 
 const InfoCard = ({ icon, title, value }: { icon: React.ReactNode, title: string, value: string | null }) => (
@@ -30,6 +30,7 @@ export default function ApplicantProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [notes, setNotes] = useState("");
+    const supabase = createClient();
 
     const fetchApplicant = useCallback(async () => {
         setIsLoading(true);
@@ -48,7 +49,7 @@ export default function ApplicantProfilePage() {
             setNotes(data.hr_notes || "");
         }
         setIsLoading(false);
-    }, [params.id, toast]);
+    }, [params.id, toast, supabase]);
 
     useEffect(() => {
         fetchApplicant();

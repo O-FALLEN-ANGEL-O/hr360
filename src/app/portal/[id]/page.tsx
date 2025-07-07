@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import type { Applicant } from '@/lib/types';
 
 const testSchema = z.object({
@@ -49,6 +49,7 @@ export default function ApplicantPortalPage() {
 
   const params = useParams();
   const { toast } = useToast();
+  const supabase = createClient();
 
   const testForm = useForm<z.infer<typeof testSchema>>({
     resolver: zodResolver(testSchema),
@@ -59,10 +60,11 @@ export default function ApplicantPortalPage() {
     name: "answers"
   });
 
+  const applicantId = Number(params.id);
+
   // Fetch applicant data and check for assessments
   useEffect(() => {
     const fetchApplicantData = async () => {
-        const applicantId = Number(params.id);
         if (isNaN(applicantId)) {
             setStage('portal'); // or an error stage
             return;
@@ -87,7 +89,7 @@ export default function ApplicantPortalPage() {
         }
     }
     fetchApplicantData();
-  }, [params.id]);
+  }, [params.id, supabase, applicantId]);
 
   const endTypingTest = useCallback(async () => {
     if (!applicant) return;
@@ -117,7 +119,7 @@ export default function ApplicantPortalPage() {
 
     setStage('results');
     toast({ title: 'Typing Test Complete!', description: 'Your results have been submitted to HR.' });
-  }, [userInput, timeLeft, typingText, applicant, toast]);
+  }, [userInput, timeLeft, typingText, applicant, toast, supabase]);
 
   // Timer logic for typing test
   useEffect(() => {

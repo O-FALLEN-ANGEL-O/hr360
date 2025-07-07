@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { College, Applicant } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -69,6 +69,7 @@ export default function CampusHrPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof collegeSchema>>({
     resolver: zodResolver(collegeSchema),
@@ -89,7 +90,7 @@ export default function CampusHrPage() {
     else setApplicants(applicantRes.data || []);
 
     setIsLoading(false);
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     fetchData();

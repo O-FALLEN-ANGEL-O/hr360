@@ -44,7 +44,7 @@ import {
 import { useEffect, useState, useMemo } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { Job, Applicant, Employee } from "@/lib/types"
 
 const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
@@ -78,6 +78,7 @@ export default function DashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
   
   useEffect(() => {
     setMounted(true);
@@ -129,6 +130,7 @@ export default function DashboardPage() {
         setIsLoading(false);
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const departmentData = useMemo(() => {

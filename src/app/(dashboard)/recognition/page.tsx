@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Trophy, Gift, Sparkles, UserCheck, MessageSquare, PartyPopper, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from '@/lib/supabase/client'
 import type { Employee, Kudo } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -35,6 +35,7 @@ export default function RecognitionPage() {
   const [leaderboard, setLeaderboard] = useState<Employee[]>([]);
   const [recentKudos, setRecentKudos] = useState<Kudo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,7 +55,7 @@ export default function RecognitionPage() {
       setIsLoading(false);
     }
     fetchData();
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="space-y-8">

@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from '@/lib/supabase/client';
 import type { Employee } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,6 +33,7 @@ const getStatusBadgeClass = (status: string) => {
 export default function RemoteStatusPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
   const fetchEmployees = async () => {
     setIsLoading(true);
@@ -47,6 +48,7 @@ export default function RemoteStatusPage() {
 
   useEffect(() => {
     fetchEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStatusChange = async (employeeId: number, newStatus: Status) => {
