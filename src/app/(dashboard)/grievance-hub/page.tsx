@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -32,23 +33,17 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabaseClient"
+import type { Grievance } from "@/lib/types"
+import { format } from "date-fns"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const ticketSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
   category: z.enum(["Payroll", "Facilities", "Interpersonal", "Policy", "Feedback", "Other"]),
-  anonymous: z.boolean().default(false).optional(),
+  is_anonymous: z.boolean().default(false).optional(),
 });
-
-const initialTickets = [
-  { id: "TKT-001", title: "Issue with payslip calculation", category: "Payroll", assignedTo: "HR", status: "In Progress", created: "2024-05-20" },
-  { id: "TKT-002", title: "Request for workplace adjustment", category: "Facilities", assignedTo: "Legal", status: "Open", created: "2024-05-18" },
-  { id: "TKT-003", title: "Conflict with team member", category: "Interpersonal", assignedTo: "HR", status: "Resolved", created: "2024-05-15" },
-  { id: "TKT-004", title: "Anonymous feedback on management", category: "Feedback", assignedTo: "HR", status: "Open", created: "2024-05-21" },
-  { id: "TKT-005", title: "Policy clarification needed", category: "Policy", assignedTo: "Legal", status: "Closed", created: "2024-05-10" },
-];
-
-type Ticket = typeof initialTickets[0];
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -61,7 +56,8 @@ const getStatusBadgeVariant = (status: string) => {
 };
 
 export default function GrievanceHubPage() {
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+  const [tickets, setTickets] = useState<Grievance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -71,26 +67,41 @@ export default function GrievanceHubPage() {
       title: "",
       description: "",
       category: "Other",
-      anonymous: false,
+      is_anonymous: false,
     },
   });
 
-  function onSubmit(values: z.infer<typeof ticketSchema>) {
-    const newTicket: Ticket = {
-      id: `TKT-${String(tickets.length + 1).padStart(3, '0')}`,
-      title: values.title,
-      category: values.category,
-      assignedTo: values.category === 'Policy' || values.category === 'Facilities' ? "Legal" : "HR",
+  const fetchTickets = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('grievances').select('*').order('created_at', { ascending: false });
+    if(error) {
+      console.error(error);
+      toast({title: "Error", description: "Could not fetch grievances", variant: "destructive"});
+    } else {
+      setTickets(data || []);
+    }
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  async function onSubmit(values: z.infer<typeof ticketSchema>) {
+    const { data, error } = await supabase.from('grievances').insert([{
+      ...values,
+      assigned_to: values.category === 'Policy' || values.category === 'Facilities' ? "Legal" : "HR",
       status: "Open",
-      created: new Date().toISOString().split('T')[0],
-    };
-    setTickets(prev => [newTicket, ...prev]);
-    toast({
-      title: "Ticket Submitted!",
-      description: `Your ticket ${newTicket.id} has been created.`,
-    });
-    form.reset();
-    setIsDialogOpen(false);
+    }]).select();
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to submit ticket.", variant: "destructive" });
+    } else {
+      setTickets(prev => [data[0], ...prev]);
+      toast({ title: "Ticket Submitted!", description: `Your ticket ${data[0].ticket_id} has been created.` });
+      form.reset();
+      setIsDialogOpen(false);
+    }
   }
 
   return (
@@ -170,7 +181,7 @@ export default function GrievanceHubPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="anonymous"
+                    name="is_anonymous"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center space-x-2 pt-2">
                         <FormControl>
@@ -184,7 +195,10 @@ export default function GrievanceHubPage() {
                   />
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Submit Ticket</Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Submit Ticket
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -197,40 +211,50 @@ export default function GrievanceHubPage() {
           <CardDescription>All active and past grievance tickets.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ticket ID</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead className="hidden sm:table-cell">Category</TableHead>
-                <TableHead className="hidden md:table-cell">Assigned To</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">Created</TableHead>
-                <TableHead>
-                    <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.map((ticket) => (
-                <TableRow key={ticket.id}>
-                  <TableCell className="font-mono text-xs">{ticket.id}</TableCell>
-                  <TableCell className="font-medium max-w-[200px] truncate">{ticket.title}</TableCell>
-                  <TableCell className="hidden sm:table-cell"><Badge variant="outline">{ticket.category}</Badge></TableCell>
-                  <TableCell className="hidden md:table-cell">{ticket.assignedTo}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(ticket.status)}>{ticket.status}</Badge>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{ticket.created}</TableCell>
-                   <TableCell>
-                     <Button variant="outline" size="sm">View</Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ticket ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead className="hidden sm:table-cell">Category</TableHead>
+                  <TableHead className="hidden md:table-cell">Assigned To</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Created</TableHead>
+                  <TableHead>
+                      <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tickets.map((ticket) => (
+                  <TableRow key={ticket.ticket_id}>
+                    <TableCell className="font-mono text-xs">{ticket.ticket_id}</TableCell>
+                    <TableCell className="font-medium max-w-[200px] truncate">{ticket.title}</TableCell>
+                    <TableCell className="hidden sm:table-cell"><Badge variant="outline">{ticket.category}</Badge></TableCell>
+                    <TableCell className="hidden md:table-cell">{ticket.assigned_to}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(ticket.status)}>{ticket.status}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">{format(new Date(ticket.created_at), 'PPP')}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">View</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
+
+    

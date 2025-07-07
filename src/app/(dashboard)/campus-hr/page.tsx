@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, Briefcase, File, CalendarClock, UserX } from "lucide-react"
+import { MoreHorizontal, UploadCloud, PlusCircle, Building, Mail, Briefcase, File, CalendarClock, UserX, Loader2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -32,32 +32,15 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabaseClient"
+import type { College, Applicant } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const collegeSchema = z.object({
   name: z.string().min(5, "College name is required."),
   location: z.string().min(3, "Location is required."),
-  contactEmail: z.string().email("A valid email is required."),
+  contact_email: z.string().email("A valid email is required."),
 });
-
-const initialColleges = [
-  { id: 1, name: "National Institute of Technology, Trichy", location: "Tiruchirappalli, TN", status: "Invited", resumes: 124 },
-  { id: 2, name: "Indian Institute of Technology, Bombay", location: "Mumbai, MH", status: "Confirmed", resumes: 258 },
-  { id: 3, name: "Vellore Institute of Technology", location: "Vellore, TN", status: "Screening", resumes: 312 },
-  { id: 4, name: "Indian Institute of Technology, Delhi", location: "New Delhi, DL", status: "Invited", resumes: 98 },
-  { id: 5, name: "College of Engineering, Pune", location: "Pune, MH", status: "Scheduled", resumes: 150 },
-];
-
-const initialInternshipApplicants = [
-  { id: 1, name: "Priya Sharma", college: "IIT Bombay", role: "SDE Intern", status: "Screening" },
-  { id: 2, name: "Rohan Gupta", college: "NIT Trichy", role: "Product Intern", status: "Interview Scheduled" },
-  { id: 3, name: "Ananya Reddy", college: "VIT Vellore", role: "Data Science Intern", status: "Applied" },
-  { id: 4, name: "Vikram Singh", college: "COEP", role: "SDE Intern", status: "Rejected" },
-  { id: 5, name: "Sneha Patel", college: "IIT Delhi", role: "UX Intern", status: "Offered" },
-];
-
-type College = typeof initialColleges[0];
-type InternshipApplicant = typeof initialInternshipApplicants[0];
-type ApplicantStatus = "Applied" | "Screening" | "Interview Scheduled" | "Offered" | "Rejected";
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -69,72 +52,78 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-const getApplicantStatusBadgeVariant = (status: ApplicantStatus) => {
+const getApplicantStatusBadgeVariant = (status: Applicant['status']) => {
     switch (status) {
       case "Interview Scheduled": return "default";
-      case "Offered": return "default";
+      case "Offer Extended": return "default";
       case "Applied": return "secondary";
       case "Screening": return "outline";
       case "Rejected": return "destructive";
       default: return "secondary";
     }
-  };
+};
 
 export default function CampusHrPage() {
-  const [colleges, setColleges] = useState<College[]>(initialColleges);
-  const [applicants, setApplicants] = useState<InternshipApplicant[]>(initialInternshipApplicants);
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof collegeSchema>>({
     resolver: zodResolver(collegeSchema),
-    defaultValues: { name: "", location: "", contactEmail: "" },
+    defaultValues: { name: "", location: "", contact_email: "" },
   });
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const collegePromise = supabase.from('colleges').select('*');
+    const applicantPromise = supabase.from('applicants').select('*').ilike('role', '%Intern%');
+
+    const [collegeRes, applicantRes] = await Promise.all([collegePromise, applicantPromise]);
+
+    if(collegeRes.error) console.error(collegeRes.error);
+    else setColleges(collegeRes.data || []);
+
+    if(applicantRes.error) console.error(applicantRes.error);
+    else setApplicants(applicantRes.data || []);
+
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
   
-  function onSubmit(values: z.infer<typeof collegeSchema>) {
-    const newCollege: College = {
-      id: colleges.length + 1,
-      name: values.name,
-      location: values.location,
-      status: "Invited",
-      resumes: 0,
-    };
-    setColleges(prev => [newCollege, ...prev]);
-    toast({
-      title: "College Invited!",
-      description: `An invitation has been sent to ${values.name}.`,
-    });
-    form.reset();
-    setIsDialogOpen(false);
+  async function onSubmit(values: z.infer<typeof collegeSchema>) {
+    const { data, error } = await supabase.from('colleges').insert([
+      { ...values, status: 'Invited', resumes_received: 0 }
+    ]).select();
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to invite college.", variant: "destructive"});
+    } else {
+      setColleges(prev => [data[0], ...prev]);
+      toast({ title: "College Invited!", description: `An invitation has been sent to ${values.name}.` });
+      form.reset();
+      setIsDialogOpen(false);
+    }
   }
 
-  const handleApplicantStatusChange = (applicantId: number, newStatus: ApplicantStatus) => {
-    setApplicants(
-      applicants.map((app) =>
-        app.id === applicantId ? { ...app, status: newStatus } : app
-      )
-    );
-    
-    const applicantName = applicants.find(app => app.id === applicantId)?.name;
+  const handleApplicantStatusChange = async (applicantId: number, newStatus: Applicant['status']) => {
+    const { error } = await supabase.from('applicants').update({ status: newStatus }).eq('id', applicantId);
 
-    if (newStatus === 'Interview Scheduled') {
-        toast({
-            title: "Interview Scheduled!",
-            description: `An email has been sent to ${applicantName} with the interview details.`
-        });
+    if (error) {
+        toast({ title: "Error", description: "Could not update status.", variant: "destructive" });
     } else {
-        toast({
-            title: "Status Updated!",
-            description: `${applicantName}'s status changed to ${newStatus}.`
-        });
+        setApplicants(applicants.map((app) => app.id === applicantId ? { ...app, status: newStatus } : app));
+        const applicantName = applicants.find(app => app.id === applicantId)?.full_name;
+        toast({ title: "Status Updated!", description: `${applicantName}'s status changed to ${newStatus}.` });
     }
   }
 
   const handleViewResume = (applicantName: string) => {
-      toast({
-          title: "Viewing Resume",
-          description: `Opening ${applicantName}'s resume in a new tab.`
-      })
+      toast({ title: "Viewing Resume", description: `Opening ${applicantName}'s resume in a new tab.` })
   }
 
   return (
@@ -147,16 +136,22 @@ export default function CampusHrPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
             <CardHeader><CardTitle>Total Resumes Collected</CardTitle></CardHeader>
-            <CardContent><p className="text-4xl font-bold">{colleges.reduce((acc, c) => acc + c.resumes, 0)}</p></CardContent>
+            <CardContent>
+                {isLoading ? <Skeleton className="h-10 w-1/2" /> : <p className="text-4xl font-bold">{colleges.reduce((acc, c) => acc + c.resumes_received, 0)}</p>}
+            </CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle>Colleges Participating</CardTitle></CardHeader>
-            <CardContent><p className="text-4xl font-bold">{colleges.filter(c => c.status !== 'Invited').length}</p></CardContent>
+            <CardContent>
+                {isLoading ? <Skeleton className="h-10 w-1/2" /> : <p className="text-4xl font-bold">{colleges.filter(c => c.status !== 'Invited').length}</p>}
+            </CardContent>
         </Card>
         <Card>
-            <CardHeader><CardTitle>Drive Success Rate</CardTitle></CardHeader>
-            <CardContent><p className="text-4xl font-bold">85%</p></CardContent>
-            <CardFooter><p className="text-xs text-muted-foreground">Shortlisted vs. Total</p></CardFooter>
+            <CardHeader><CardTitle>Intern Offers Made</CardTitle></CardHeader>
+            <CardContent>
+                {isLoading ? <Skeleton className="h-10 w-1/2" /> : <p className="text-4xl font-bold">{applicants.filter(a => a.status === 'Offer Extended').length}</p>}
+            </CardContent>
+            <CardFooter><p className="text-xs text-muted-foreground">This hiring season</p></CardFooter>
         </Card>
       </div>
 
@@ -180,10 +175,15 @@ export default function CampusHrPage() {
                     <FormField control={form.control} name="location" render={({ field }) => (
                       <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g., City, State" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <FormField control={form.control} name="contactEmail" render={({ field }) => (
+                     <FormField control={form.control} name="contact_email" render={({ field }) => (
                       <FormItem><FormLabel>Placement Cell Email</FormLabel><FormControl><Input type="email" placeholder="e.g., tpo@example.edu" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <DialogFooter><Button type="submit">Send Invite</Button></DialogFooter>
+                    <DialogFooter>
+                      <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Send Invite
+                      </Button>
+                    </DialogFooter>
                   </form>
                 </Form>
               </DialogContent>
@@ -191,6 +191,7 @@ export default function CampusHrPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {isLoading ? <Skeleton className="h-40 w-full" /> : 
           <Table>
             <TableHeader>
               <TableRow>
@@ -207,7 +208,7 @@ export default function CampusHrPage() {
                   <TableCell className="font-medium">{college.name}</TableCell>
                   <TableCell className="hidden sm:table-cell">{college.location}</TableCell>
                   <TableCell><Badge variant={getStatusBadgeVariant(college.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": college.status === 'Confirmed' || college.status === 'Scheduled'})}>{college.status}</Badge></TableCell>
-                  <TableCell>{college.resumes}</TableCell>
+                  <TableCell>{college.resumes_received}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Actions</span></Button></DropdownMenuTrigger>
@@ -221,6 +222,7 @@ export default function CampusHrPage() {
               ))}
             </TableBody>
           </Table>
+          }
         </CardContent>
       </Card>
       
@@ -230,6 +232,7 @@ export default function CampusHrPage() {
           <CardDescription>Manage candidates from campus drives and internship postings.</CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading ? <Skeleton className="h-40 w-full" /> :
           <Table>
             <TableHeader>
               <TableRow>
@@ -243,11 +246,11 @@ export default function CampusHrPage() {
             <TableBody>
               {applicants.map((applicant) => (
                 <TableRow key={applicant.id}>
-                  <TableCell className="font-medium">{applicant.name}</TableCell>
+                  <TableCell className="font-medium">{applicant.full_name}</TableCell>
                   <TableCell>{applicant.college}</TableCell>
                   <TableCell>{applicant.role}</TableCell>
                    <TableCell>
-                    <Badge variant={getApplicantStatusBadgeVariant(applicant.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === 'Offered'})}>
+                    <Badge variant={getApplicantStatusBadgeVariant(applicant.status)} className={cn({"bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === 'Offer Extended'})}>
                         {applicant.status}
                     </Badge>
                   </TableCell>
@@ -260,7 +263,7 @@ export default function CampusHrPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewResume(applicant.name)}>
+                            <DropdownMenuItem onClick={() => handleViewResume(applicant.full_name)}>
                                 <File className="mr-2 h-4 w-4" /> View Resume
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleApplicantStatusChange(applicant.id, 'Interview Scheduled')}>
@@ -276,8 +279,11 @@ export default function CampusHrPage() {
               ))}
             </TableBody>
           </Table>
+          }
         </CardContent>
       </Card>
     </div>
   )
 }
+
+    

@@ -1,30 +1,17 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, MessageSquare, Info } from "lucide-react"
+import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, MessageSquare, Info, Save } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-
-// In a real app, this data would be fetched from an API
-const allApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", contact: "+1234567890", college: "State University", status: "Pending Review", role: "Chat Support", aptitudeScore: "4/5", typingWPM: 75, typingAccuracy: 96, avatar: "https://placehold.co/100x100.png?text=CD", resumeSummary: "Experienced chat support specialist with a track record of high customer satisfaction scores. Proficient in Zendesk and Intercom.", source: "Email", hrNotes: "Strong candidate for the support role. Follow up on Tuesday." },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", contact: "+1987654321", college: "Ivy League College", status: "Interview Scheduled", role: "Product Manager", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=DS", resumeSummary: "Results-driven Product Manager with 5+ years of experience in agile environments. Successfully launched three major B2B SaaS products.", source: "LinkedIn", hrNotes: "Excellent fit for PM role. Final round scheduled." },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", contact: "+442079460958", college: "Tech Institute", status: "Rejected", role: "Data Analyst", aptitudeScore: "2/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=EJ", resumeSummary: "Data Analyst with a strong background in SQL and Python. Lacks experience in the specific BI tools required for the role.", source: "Naukri", hrNotes: "Does not meet requirements for BI tools. Rejecting." },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", contact: "+61291112222", college: "Design School", status: "Pending Review", role: "UX Designer", aptitudeScore: "3/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=FW", resumeSummary: "Creative UX Designer focused on user-centered design principles. Portfolio showcases mobile and web application designs.", source: "Email", hrNotes: "" },
-  { id: 5, name: "George Black", email: "george.b@example.com", contact: "+4915112345678", college: "Engineering College", status: "Offer Extended", role: "Backend Developer", aptitudeScore: "5/5", typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=GB", resumeSummary: "Senior Backend Developer with expertise in microservices architecture using Java and Spring Boot. Strong understanding of cloud-native development on AWS.", source: "LinkedIn", hrNotes: "Top candidate. Offer extended." },
-  { id: 6, name: "Hannah Lee", email: "h.lee@inbox.com", contact: "+821012345678", college: "KAIST", status: "New", role: "Data Scientist", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=HL", resumeSummary: "Recent graduate with a Master's in Data Science. Strong theoretical knowledge in machine learning and statistical modeling.", source: "Email", hrNotes: "" },
-  { id: 7, name: "Ivan Rodriguez", email: "ivan.r@inbox.com", contact: "+34600112233", college: "Polytechnic University of Madrid", status: "New", role: "Backend Developer", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=IR", resumeSummary: "Backend developer with 2 years of experience building REST APIs with Node.js and Express. Eager to learn new technologies.", source: "Walk-in", hrNotes: "" },
-  { id: 8, name: "Jennifer Wilson", email: "j.wilson@example.com", contact: "+14155552671", college: "Community College", status: "New", role: "Chat Support", aptitudeScore: null, typingWPM: null, typingAccuracy: null, avatar: "https://placehold.co/100x100.png?text=JW", resumeSummary: "Eager to start a career in customer support. Excellent communication skills demonstrated during initial screening.", source: "Walk-in", hrNotes: "Walk-in applicant from the job fair. Seems promising." },
-
-];
-
-type Applicant = typeof allApplicants[0];
+import { supabase } from "@/lib/supabaseClient"
+import type { Applicant } from "@/lib/types"
 
 const InfoCard = ({ icon, title, value }: { icon: React.ReactNode, title: string, value: string | null }) => (
     <div className="flex items-start gap-3">
@@ -40,12 +27,48 @@ export default function ApplicantProfilePage() {
     const params = useParams();
     const { toast } = useToast();
     const [applicant, setApplicant] = useState<Applicant | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [notes, setNotes] = useState("");
+
+    const fetchApplicant = useCallback(async () => {
+        setIsLoading(true);
+        const applicantId = Number(params.id);
+        const { data, error } = await supabase
+            .from('applicants')
+            .select('*')
+            .eq('id', applicantId)
+            .single();
+
+        if (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to fetch applicant data.", variant: "destructive" });
+        } else {
+            setApplicant(data);
+            setNotes(data.hr_notes || "");
+        }
+        setIsLoading(false);
+    }, [params.id, toast]);
 
     useEffect(() => {
-        const applicantId = Number(params.id);
-        const foundApplicant = allApplicants.find(a => a.id === applicantId);
-        setApplicant(foundApplicant || null);
-    }, [params.id]);
+        fetchApplicant();
+    }, [fetchApplicant]);
+    
+    const handleSaveNotes = async () => {
+      if(!applicant) return;
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('applicants')
+        .update({ hr_notes: notes })
+        .eq('id', applicant.id);
+
+      if (error) {
+        toast({ title: "Error", description: "Failed to save notes.", variant: "destructive"});
+      } else {
+        toast({ title: "Notes Saved!", description: "Your notes have been updated."});
+      }
+      setIsSaving(false);
+    }
 
     const handleAssignTest = (testType: 'Aptitude' | 'Typing') => {
         toast({
@@ -54,8 +77,12 @@ export default function ApplicantProfilePage() {
         })
     }
     
-    if (!applicant) {
+    if (isLoading) {
         return <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
+    if (!applicant) {
+        return <div className="text-center">Applicant not found.</div>;
     }
 
     const getStatusBadgeVariant = (status: string) => {
@@ -65,6 +92,7 @@ export default function ApplicantProfilePage() {
           case "Rejected": return "destructive";
           case "Offer Extended": return "default";
           case "New": return "default";
+          case "Hired": return "default";
           default: return "secondary";
         }
       };
@@ -74,14 +102,14 @@ export default function ApplicantProfilePage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-20 w-20">
-                        <AvatarImage src={applicant.avatar} alt={applicant.name} data-ai-hint="employee avatar" />
-                        <AvatarFallback>{applicant.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                        <AvatarImage src={`https://placehold.co/100x100.png?text=${applicant.full_name.split(" ").map(n => n[0]).join("")}`} alt={applicant.full_name} data-ai-hint="employee avatar" />
+                        <AvatarFallback>{applicant.full_name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{applicant.name}</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">{applicant.full_name}</h1>
                         <p className="text-muted-foreground">{applicant.role}</p>
                         <Badge variant={getStatusBadgeVariant(applicant.status)} className={cn("mt-2", {
-                            "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended",
+                            "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended" || applicant.status === "Hired",
                             "bg-blue-500 hover:bg-blue-600 text-white": applicant.status === "New"
                         })}>
                             {applicant.status}
@@ -102,7 +130,7 @@ export default function ApplicantProfilePage() {
                         <CardHeader><CardTitle>Contact Information</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <InfoCard icon={<Mail className="h-4 w-4"/>} title="Email" value={applicant.email} />
-                            <InfoCard icon={<Phone className="h-4 w-4"/>} title="Contact" value={applicant.contact} />
+                            <InfoCard icon={<Phone className="h-4 w-4"/>} title="Contact" value={applicant.phone} />
                             <InfoCard icon={<Building className="h-4 w-4"/>} title="College" value={applicant.college} />
                             <InfoCard icon={<Info className="h-4 w-4"/>} title="Source" value={applicant.source} />
                         </CardContent>
@@ -110,16 +138,19 @@ export default function ApplicantProfilePage() {
                     <Card>
                         <CardHeader><CardTitle>AI Resume Summary</CardTitle></CardHeader>
                         <CardContent>
-                           <p className="text-sm text-muted-foreground italic">{applicant.resumeSummary}</p>
+                           <p className="text-sm text-muted-foreground italic">{applicant.resume_summary}</p>
                         </CardContent>
                     </Card>
                      <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5"/> HR Notes</CardTitle></CardHeader>
                         <CardContent>
-                           <Textarea placeholder="Add internal notes about the candidate..." rows={4} defaultValue={applicant.hrNotes}/>
+                           <Textarea placeholder="Add internal notes about the candidate..." rows={4} value={notes} onChange={(e) => setNotes(e.target.value)}/>
                         </CardContent>
                         <CardFooter>
-                            <Button size="sm" className="w-full">Save Notes</Button>
+                            <Button size="sm" className="w-full" onClick={handleSaveNotes} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Save Notes
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>
@@ -135,9 +166,9 @@ export default function ApplicantProfilePage() {
                             <div className="flex items-center justify-between rounded-md border p-4">
                                 <div>
                                     <p className="text-sm text-muted-foreground">Score</p>
-                                    <p className="text-2xl font-bold">{applicant.aptitudeScore || "Not Taken"}</p>
+                                    <p className="text-2xl font-bold">{applicant.aptitude_score || "Not Taken"}</p>
                                 </div>
-                                <Button variant="link" disabled={!applicant.aptitudeScore}>View Details</Button>
+                                <Button variant="link" disabled={!applicant.aptitude_score}>View Details</Button>
                             </div>
                         </div>
                         <div className="space-y-4">
@@ -146,13 +177,13 @@ export default function ApplicantProfilePage() {
                                 <div className="flex flex-1 items-center justify-between rounded-md border p-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">WPM</p>
-                                        <p className="text-2xl font-bold">{applicant.typingWPM || "N/A"}</p>
+                                        <p className="text-2xl font-bold">{applicant.typing_wpm || "N/A"}</p>
                                     </div>
                                 </div>
                                  <div className="flex flex-1 items-center justify-between rounded-md border p-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Accuracy</p>
-                                        <p className="text-2xl font-bold">{applicant.typingAccuracy ? `${applicant.typingAccuracy}%` : "N/A"}</p>
+                                        <p className="text-2xl font-bold">{applicant.typing_accuracy ? `${applicant.typing_accuracy}%` : "N/A"}</p>
                                     </div>
                                 </div>
                              </div>
@@ -166,3 +197,5 @@ export default function ApplicantProfilePage() {
         </div>
     )
 }
+
+    

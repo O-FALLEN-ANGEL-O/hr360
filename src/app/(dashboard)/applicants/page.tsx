@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import {
   Table,
@@ -27,89 +27,60 @@ import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
-
-const initialApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support", source: "Email" },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", status: "Interview Scheduled", role: "Product Manager", source: "LinkedIn" },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst", source: "Naukri" },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer", source: "Email" },
-  { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer", source: "LinkedIn" },
-];
-
-const newScannedApplicantsPool = [
-    { id: 6, name: "Hannah Lee", email: "h.lee@inbox.com", status: "New", role: "Data Scientist", source: "Email" },
-    { id: 7, name: "Ivan Rodriguez", email: "ivan.r@inbox.com", status: "New", role: "Backend Developer", source: "Walk-in" },
-    { id: 9, name: "Kevin Scott", email: "k.scott@example.com", status: "New", role: "QA Engineer", source: "LinkedIn" },
-    { id: 10, name: "Laura Green", email: "laura.g@example.com", status: "New", role: "Marketing Intern", source: "Naukri" },
-    { id: 11, name: "Mike Adams", email: "m.adams@example.com", status: "New", role: "DevOps Engineer", source: "Email" },
-];
-
-
-type Applicant = typeof initialApplicants[0];
-type Status = "Pending Review" | "Interview Scheduled" | "Rejected" | "Offer Extended" | "New";
-
+import { supabase } from "@/lib/supabaseClient"
+import type { Applicant } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ApplicantsPage() {
-  const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [isDriveMode, setIsDriveMode] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState<number | null>(null);
   const driveModeInterval = useRef<NodeJS.Timeout | null>(null);
-  const availableApplicants = useRef([...newScannedApplicantsPool]);
   const { toast } = useToast();
 
-  const getStatusBadgeVariant = (status: Status) => {
-    switch (status) {
-      case "Pending Review": return "secondary";
-      case "Interview Scheduled": return "default";
-      case "Rejected": return "destructive";
-      case "Offer Extended": return "default";
-      case "New": return "default";
-      default: return "secondary";
-    }
-  };
+  const fetchApplicants = useCallback(async (showToast = false) => {
+    if (!showToast) setIsLoading(true);
+    else setIsScanning(true);
 
-  const handleFetchNewApplicants = () => {
-    if (availableApplicants.current.length === 0) {
-        toast({ title: "No More Applicants", description: "The pool of new applicants is empty."});
-        if(isDriveMode) setIsDriveMode(false);
-        return;
-    }
-    
-    setIsScanning(true);
-    toast({
-        title: "Fetching New Applicants...",
-        description: "Scanning all sources for new candidates.",
-    });
+    const { data, error } = await supabase
+      .from('applicants')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    setTimeout(() => {
-        const newApplicant = availableApplicants.current.pop();
-        if(newApplicant) {
-            setApplicants(prev => [newApplicant, ...prev]);
-             toast({
-                title: "Scan Complete!",
-                description: `1 new applicant has been added.`,
-            });
-        }
-        setIsScanning(false);
-    }, 1500);
-  }
+    if (error) {
+      console.error("Error fetching applicants:", error);
+      toast({ title: "Error", description: "Could not fetch applicants.", variant: "destructive" });
+    } else {
+      if (showToast && data && data.length > applicants.length && applicants.length > 0) {
+        toast({ title: "New Applicants Arrived!", description: `${data.length - applicants.length} new candidates are available.` });
+      }
+      setApplicants(data || []);
+    }
+    setIsLoading(false);
+    setIsScanning(false);
+  }, [toast, applicants.length]);
+
+  useEffect(() => {
+    fetchApplicants();
+  }, []);
 
   useEffect(() => {
     if (isDriveMode) {
-        driveModeInterval.current = setInterval(handleFetchNewApplicants, 5000); // Fetch every 5 seconds
+      driveModeInterval.current = setInterval(() => fetchApplicants(true), 5000); // Fetch every 5 seconds
     } else {
-        if(driveModeInterval.current) {
-            clearInterval(driveModeInterval.current);
-        }
+      if (driveModeInterval.current) {
+        clearInterval(driveModeInterval.current);
+      }
     }
 
     return () => {
-        if(driveModeInterval.current) {
-            clearInterval(driveModeInterval.current);
-        }
+      if (driveModeInterval.current) {
+        clearInterval(driveModeInterval.current);
+      }
     }
-  }, [isDriveMode]);
+  }, [isDriveMode, fetchApplicants]);
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/register`;
@@ -119,44 +90,59 @@ export default function ApplicantsPage() {
       description: "Walk-in registration link copied to clipboard.",
     });
   };
+  
+  const getStatusBadgeVariant = (status: Applicant['status']) => {
+    switch (status) {
+      case "Pending Review": return "secondary";
+      case "Interview Scheduled": return "default";
+      case "Rejected": return "destructive";
+      case "Offer Extended": return "default";
+      case "New": return "default";
+      case "Hired": return "default";
+      default: return "secondary";
+    }
+  };
 
   const handleStatusChange = async (
-    applicantId: number, 
-    newStatus: Status, 
+    applicantId: number,
+    newStatus: Applicant['status'],
     context: 'Invitation to Interview' | 'Offer Extended' | 'Polite Rejection'
   ) => {
     const applicant = applicants.find(a => a.id === applicantId);
     if (!applicant) return;
-    
+
     setIsSendingEmail(applicantId);
-    
+
     try {
-        await aiEmailResponder({
-            applicantName: applicant.name,
-            jobTitle: applicant.role,
-            recipientEmail: applicant.email,
-            communicationContext: context,
-            companyName: "HR360+ Platform Inc."
-        });
-        
-        setApplicants(prev => prev.map(a => 
-            a.id === applicantId ? { ...a, status: newStatus } : a
-        ));
-        
-        toast({
-            title: "Email Sent!",
-            description: `A ${context.toLowerCase()} email has been automatically sent to ${applicant.name}.`,
-        });
+      await aiEmailResponder({
+        applicantName: applicant.full_name,
+        jobTitle: applicant.role,
+        recipientEmail: applicant.email,
+        communicationContext: context,
+        companyName: "HR360+ Platform Inc."
+      });
+
+      const { error } = await supabase.from('applicants').update({ status: newStatus }).eq('id', applicantId);
+      if (error) throw error;
+
+      setApplicants(prev => prev.map(a =>
+        a.id === applicantId ? { ...a, status: newStatus } : a
+      ));
+
+      toast({
+        title: "Email Sent & Status Updated!",
+        description: `A ${context.toLowerCase()} email has been sent to ${applicant.full_name}.`,
+      });
 
     } catch (error) {
-        console.error("Error sending email:", error);
-        toast({
-            title: "Error",
-            description: "Failed to send email. Please try again from the AI Email Composer.",
-            variant: "destructive"
-        });
+      console.error("Error updating status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
     } finally {
-        setIsSendingEmail(null);
+      setIsSendingEmail(null);
     }
   }
 
@@ -167,93 +153,103 @@ export default function ApplicantsPage() {
         title="Candidate Management"
         description="Review and manage all candidates in the pipeline."
       />
-       <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
-            <div className="flex items-center space-x-2">
-                <Switch id="drive-mode" checked={isDriveMode} onCheckedChange={setIsDriveMode} />
-                <Label htmlFor="drive-mode" className="flex items-center gap-2">
-                    <Power className={cn("h-4 w-4 transition-colors text-muted-foreground", {"text-destructive": isDriveMode})} />
-                    Hiring Drive Mode
-                </Label>
-            </div>
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={handleCopyLink}>
-                    <Link2 className="mr-2 h-4 w-4" />
-                    Copy Walk-in Kiosk Link
-                </Button>
-                <Button onClick={handleFetchNewApplicants} disabled={isScanning || isDriveMode}>
-                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                    Fetch New Applicants
-                </Button>
-            </div>
-       </div>
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
+        <div className="flex items-center space-x-2">
+          <Switch id="drive-mode" checked={isDriveMode} onCheckedChange={setIsDriveMode} />
+          <Label htmlFor="drive-mode" className="flex items-center gap-2">
+            <Power className={cn("h-4 w-4 transition-colors text-muted-foreground", { "text-destructive": isDriveMode })} />
+            Hiring Drive Mode
+          </Label>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleCopyLink}>
+            <Link2 className="mr-2 h-4 w-4" />
+            Copy Walk-in Kiosk Link
+          </Button>
+          <Button onClick={() => fetchApplicants(true)} disabled={isScanning || isDriveMode}>
+            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+            Fetch New Applicants
+          </Button>
+        </div>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>All Applicants</CardTitle>
           <CardDescription>A list of all candidates in the pipeline from all sources.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Candidate Name</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead className="hidden sm:table-cell">Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {applicants.map((applicant) => (
-                <TableRow key={applicant.id} className={cn({"bg-primary/5": applicant.status === "New"})} >
-                  <TableCell className="font-medium">{applicant.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">{applicant.role}</TableCell>
-                   <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline">{applicant.source}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(applicant.status as Status)} className={cn({
-                        "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended",
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Candidate Name</TableHead>
+                  <TableHead className="hidden md:table-cell">Role</TableHead>
+                  <TableHead className="hidden sm:table-cell">Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {applicants.map((applicant) => (
+                  <TableRow key={applicant.id} className={cn({ "bg-primary/5": applicant.status === "New" })} >
+                    <TableCell className="font-medium">{applicant.full_name}</TableCell>
+                    <TableCell className="hidden md:table-cell">{applicant.role}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant="outline">{applicant.source}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(applicant.status)} className={cn({
+                        "bg-accent text-accent-foreground hover:bg-accent/80": applicant.status === "Offer Extended" || applicant.status === "Hired",
                         "bg-blue-500 hover:bg-blue-600 text-white": applicant.status === "New"
-                    })}>
+                      })}>
                         {applicant.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {isSendingEmail === applicant.id ? (
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {isSendingEmail === applicant.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
+                      ) : (
                         <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Actions</span>
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                            <Link href={`/applicants/${applicant.id}`}>
+                              <Link href={`/applicants/${applicant.id}`}>
                                 <User className="mr-2 h-4 w-4" /> View Profile
-                            </Link>
+                              </Link>
                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled', 'Invitation to Interview')}>
-                                <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
+                            <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Interview Scheduled', 'Invitation to Interview')}>
+                              <CalendarPlus className="mr-2 h-4 w-4" /> Schedule Interview
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusChange(applicant.id, 'Offer Extended', 'Offer Extended')}>
-                                <FileCheck className="mr-2 h-4 w-4" /> Extend Offer
+                              <FileCheck className="mr-2 h-4 w-4" /> Extend Offer
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange(applicant.id, 'Rejected', 'Polite Rejection')}>
-                                <UserX className="mr-2 h-4 w-4" /> Reject Candidate
+                              <UserX className="mr-2 h-4 w-4" /> Reject Candidate
                             </DropdownMenuItem>
-                        </DropdownMenuContent>
+                          </DropdownMenuContent>
                         </DropdownMenu>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
+
+    

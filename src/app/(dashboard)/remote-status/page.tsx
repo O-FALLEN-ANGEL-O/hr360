@@ -8,19 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabaseClient";
+import type { Employee } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const initialEmployees = [
-  { id: 1, name: "Alice Johnson", role: "Software Engineer", status: "Remote", avatar: "https://placehold.co/100x100.png?text=AJ" },
-  { id: 2, name: "Bob Williams", role: "Product Manager", status: "Office", avatar: "https://placehold.co/100x100.png?text=BW" },
-  { id: 3, name: "Charlie Brown", role: "UX Designer", status: "Leave", avatar: "https://placehold.co/100x100.png?text=CB" },
-  { id: 4, name: "Diana Miller", role: "Data Scientist", status: "Remote", avatar: "https://placehold.co/100x100.png?text=DM" },
-  { id: 5, name: "Ethan Davis", role: "DevOps Engineer", status: "Probation", avatar: "https://placehold.co/100x100.png?text=ED" },
-  { id: 6, name: "Fiona Garcia", role: "Frontend Developer", status: "Office", avatar: "https://placehold.co/100x100.png?text=FG" },
-  { id: 7, name: "George Rodriguez", role: "Backend Developer", status: "Remote", avatar: "https://placehold.co/100x100.png?text=GR" },
-  { id: 8, name: "Hannah Martinez", role: "HR Specialist", status: "Office", avatar: "https://placehold.co/100x100.png?text=HM" },
-];
-
-type Employee = typeof initialEmployees[0];
 type Status = "Remote" | "Office" | "Leave" | "Probation";
 const statuses: Status[] = ["Remote", "Office", "Leave", "Probation"];
 
@@ -40,29 +31,33 @@ const getStatusBadgeClass = (status: string) => {
 };
 
 export default function RemoteStatusPage() {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('employees').select('*');
+    if (error) {
+      console.error(error);
+    } else {
+      setEmployees(data || []);
+    }
+    setIsLoading(false);
+  }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-        setEmployees(prevEmployees => {
-            const randomIndex = Math.floor(Math.random() * prevEmployees.length);
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            
-            return prevEmployees.map((emp, index) => 
-                index === randomIndex ? { ...emp, status: randomStatus } : emp
-            );
-        });
-    }, 4000); // Change a random employee's status every 4 seconds
-
-    return () => clearInterval(interval);
+    fetchEmployees();
   }, []);
 
-  const handleStatusChange = (employeeId: number, newStatus: Status) => {
+  const handleStatusChange = async (employeeId: number, newStatus: Status) => {
+    // Optimistically update the UI
     setEmployees(
       employees.map((emp) =>
         emp.id === employeeId ? { ...emp, status: newStatus } : emp
       )
     );
+    // Update the database
+    await supabase.from('employees').update({ status: newStatus }).eq('id', employeeId);
   };
 
   return (
@@ -71,47 +66,64 @@ export default function RemoteStatusPage() {
         title="Remote Status Manager"
         description="A real-time grid of your team's work status and location."
       />
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {employees.map((employee) => (
-          <Card key={employee.id} className="text-center">
-            <CardHeader>
-              <Avatar className="mx-auto h-20 w-20">
-                <AvatarImage src={employee.avatar} alt={employee.name} data-ai-hint="employee avatar" />
-                <AvatarFallback>
-                  {employee.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-            </CardHeader>
-            <CardContent>
-              <CardTitle className="text-lg">{employee.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{employee.role}</p>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Badge className={cn("text-xs cursor-pointer transition-all", getStatusBadgeClass(employee.status))}>
-                    {employee.status}
-                  </Badge>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center">
-                  {statuses.map((status) => (
-                    <DropdownMenuItem
-                      key={status}
-                      onSelect={() => handleStatusChange(employee.id, status)}
-                      disabled={employee.status === status}
-                    >
-                      {status}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="items-center"><Skeleton className="h-20 w-20 rounded-full" /></CardHeader>
+              <CardContent className="text-center space-y-2">
+                <Skeleton className="h-5 w-3/4 mx-auto" />
+                <Skeleton className="h-4 w-1/2 mx-auto" />
+              </CardContent>
+              <CardFooter className="justify-center"><Skeleton className="h-6 w-20 rounded-full" /></CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {employees.map((employee) => (
+            <Card key={employee.id} className="text-center">
+              <CardHeader>
+                <Avatar className="mx-auto h-20 w-20">
+                  <AvatarImage src={employee.avatar_url} alt={employee.name} data-ai-hint="employee avatar" />
+                  <AvatarFallback>
+                    {employee.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="text-lg">{employee.name}</CardTitle>
+                <p className="text-sm text-muted-foreground">{employee.role}</p>
+              </CardContent>
+              <CardFooter className="flex justify-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Badge className={cn("text-xs cursor-pointer transition-all", getStatusBadgeClass(employee.status))}>
+                      {employee.status}
+                    </Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center">
+                    {statuses.map((status) => (
+                      <DropdownMenuItem
+                        key={status}
+                        onSelect={() => handleStatusChange(employee.id, status)}
+                        disabled={employee.status === status}
+                      >
+                        {status}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+    
