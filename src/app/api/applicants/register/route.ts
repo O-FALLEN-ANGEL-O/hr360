@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const applicantSchema = z.object({
   fullName: z.string().min(2),
@@ -12,21 +12,8 @@ const applicantSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Supabase environment variables not set');
-    return NextResponse.json(
-      { error: 'Server configuration error: Missing Supabase credentials.' },
-      { status: 500 }
-    );
-  }
-
-  // Initialize client inside the handler for serverless environments
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
   try {
+    const supabaseAdmin = createAdminClient();
     const body = await request.json();
     const parsedData = applicantSchema.safeParse(body);
 
