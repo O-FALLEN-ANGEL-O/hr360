@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import type { Workflow } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -118,6 +118,7 @@ export default function WorkflowsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof workflowSchema>>({
     resolver: zodResolver(workflowSchema),
@@ -141,7 +142,7 @@ export default function WorkflowsPage() {
       setWorkflows((data as Workflow[]) || []);
     }
     setIsLoading(false);
-  }, [toast]);
+  }, [toast, supabase]);
 
   useEffect(() => {
     fetchWorkflows();
@@ -322,11 +323,11 @@ export default function WorkflowsPage() {
                     })}
                   </ul>
                 </CardContent>
-                <div className="border-t p-4">
+                <CardFooter>
                   <Button variant="outline" className="w-full">
                     View Details <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </div>
+                </CardFooter>
               </Card>
             )
           })
