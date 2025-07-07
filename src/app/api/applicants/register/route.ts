@@ -11,13 +11,21 @@ const applicantSchema = z.object({
   resumeSummary: z.string().optional(),
 });
 
-// Use service role key on the server to bypass RLS for this trusted route
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
 export async function POST(request: Request) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Supabase environment variables not set');
+    return NextResponse.json(
+      { error: 'Server configuration error: Missing Supabase credentials.' },
+      { status: 500 }
+    );
+  }
+
+  // Initialize client inside the handler for serverless environments
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
   try {
     const body = await request.json();
     const parsedData = applicantSchema.safeParse(body);
