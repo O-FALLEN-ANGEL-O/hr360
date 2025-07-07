@@ -70,11 +70,26 @@ export default function ApplicantProfilePage() {
       setIsSaving(false);
     }
 
-    const handleAssignTest = (testType: 'Aptitude' | 'Typing') => {
-        toast({
-            title: `${testType} Test Assigned`,
-            description: `The candidate will be notified in their portal.`
-        })
+    const handleAssignTest = async (testType: 'Aptitude' | 'Typing') => {
+        if (!applicant) return;
+        const { error } = await supabase
+            .from('applicants')
+            .update({ assigned_test: testType.toLowerCase() as 'aptitude' | 'typing' })
+            .eq('id', applicant.id);
+        
+        if (error) {
+             toast({
+                title: 'Error',
+                description: `Could not assign ${testType} Test.`,
+                variant: 'destructive'
+            })
+        } else {
+            setApplicant(prev => prev ? {...prev, assigned_test: testType.toLowerCase() as 'aptitude' | 'typing'} : null);
+            toast({
+                title: `${testType} Test Assigned`,
+                description: `The candidate will be notified in their portal.`
+            })
+        }
     }
     
     if (isLoading) {
@@ -101,8 +116,8 @@ export default function ApplicantProfilePage() {
         <div className="space-y-8">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={`https://placehold.co/100x100.png?text=${applicant.full_name.split(" ").map(n => n[0]).join("")}`} alt={applicant.full_name} data-ai-hint="employee avatar" />
+                    <Avatar className="h-20 w-20" data-ai-hint="employee avatar">
+                        <AvatarImage src={`https://placehold.co/100x100.png`} alt={applicant.full_name} />
                         <AvatarFallback>{applicant.full_name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -197,5 +212,3 @@ export default function ApplicantProfilePage() {
         </div>
     )
 }
-
-    

@@ -23,6 +23,7 @@ const formSchema = z.object({
   email: z.string().email("A valid email is required."),
   phone: z.string().min(10, "A valid phone number is required."),
   resumeText: z.string().optional(),
+  resumeSummary: z.string().optional(),
 });
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -47,12 +48,12 @@ export function NewApplicantForm() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { fullName: '', email: '', phone: '', resumeText: '' },
+    defaultValues: { fullName: '', email: '', phone: '', resumeText: '', resumeSummary: '' },
   });
   
   // Effect to redirect after submission
   useEffect(() => {
-    if (isSubmitted) {
+    if (isSubmitted && newApplicantId !== null) {
       const timer = setTimeout(() => {
         router.push(`/portal/${newApplicantId}`);
       }, 3000);
@@ -74,6 +75,7 @@ export function NewApplicantForm() {
       form.setValue('email', result.email);
       form.setValue('phone', result.phone);
       form.setValue('resumeText', result.rawText);
+      form.setValue('resumeSummary', result.summary);
       
       toast({ title: 'Resume Processed!', description: 'Your details have been auto-filled.' });
     } catch (error) {
@@ -102,6 +104,7 @@ export function NewApplicantForm() {
         form.setValue('email', result.email);
         form.setValue('phone', result.phone);
         form.setValue('resumeText', result.rawText);
+        form.setValue('resumeSummary', result.summary);
         toast({ title: 'Resume Captured & Processed!', description: 'Your details have been auto-filled.' });
     } catch (error) {
         console.error(error);
@@ -152,6 +155,10 @@ export function NewApplicantForm() {
           email: values.email,
           phone: values.phone,
           resume_text: values.resumeText,
+          resume_summary: values.resumeSummary,
+          role: 'Walk-in Applicant',
+          source: 'Walk-in Kiosk',
+          status: 'New'
         }
       ]).select().single();
 
@@ -163,13 +170,13 @@ export function NewApplicantForm() {
       setIsSubmitted(true);
       toast({
         title: "Registration Complete!",
-        description: "Thank you for registering. Redirecting you to your personal applicant portal...",
+        description: "Thank you. Redirecting you to your personal applicant portal...",
       });
     } catch (error) {
       console.error("Error submitting applicant:", error);
       toast({
         title: "Error",
-        description: "Failed to submit applicant. Please try again.",
+        description: "Failed to submit application. Please check your details and try again.",
         variant: "destructive",
       });
     } finally {
@@ -183,7 +190,7 @@ export function NewApplicantForm() {
             <CardContent className="text-center p-8 flex flex-col items-center justify-center">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
                 <h3 className="text-2xl font-bold">Registration Successful!</h3>
-                <p className="text-muted-foreground mt-2">Your Applicant ID is <span className="font-mono text-primary font-bold">WALK-IN-00{newApplicantId}</span>.</p>
+                <p className="text-muted-foreground mt-2">Your Applicant ID is <span className="font-mono text-primary font-bold">APP-00{newApplicantId}</span>.</p>
                 <div className="flex items-center gap-2 mt-6">
                     <Loader2 className="h-4 w-4 animate-spin"/>
                     <p className="text-sm text-muted-foreground">Redirecting to your portal...</p>

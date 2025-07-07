@@ -84,8 +84,8 @@ export default function RemoteStatusPage() {
           {employees.map((employee) => (
             <Card key={employee.id} className="text-center">
               <CardHeader>
-                <Avatar className="mx-auto h-20 w-20">
-                  <AvatarImage src={employee.avatar_url} alt={employee.name} data-ai-hint="employee avatar" />
+                <Avatar className="mx-auto h-20 w-20" data-ai-hint="employee avatar">
+                  <AvatarImage src={employee.avatar_url} alt={employee.name} />
                   <AvatarFallback>
                     {employee.name
                       .split(" ")
@@ -125,5 +125,3 @@ export default function RemoteStatusPage() {
     </div>
   );
 }
-
-    

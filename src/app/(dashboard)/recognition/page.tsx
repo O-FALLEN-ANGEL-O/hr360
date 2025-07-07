@@ -81,8 +81,8 @@ export default function RecognitionPage() {
                   {leaderboard.map((person, index) => (
                     <li key={index} className="flex items-center gap-4">
                       <span className="font-bold text-lg text-muted-foreground">{index + 1}</span>
-                      <Avatar>
-                        <AvatarImage src={person.avatar_url} alt={person.name} data-ai-hint="employee avatar" />
+                      <Avatar data-ai-hint="employee avatar">
+                        <AvatarImage src={person.avatar_url} alt={person.name} />
                         <AvatarFallback>{person.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -157,5 +157,3 @@ export default function RecognitionPage() {
     </div>
   )
 }
-
-    

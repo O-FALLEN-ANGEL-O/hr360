@@ -45,7 +45,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
-import type { Job, Applicant } from "@/lib/types"
+import type { Job, Applicant, Employee } from "@/lib/types"
 
 const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
   Interviewing: "default",
@@ -76,7 +76,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({ employees: 0, attrition: 8.2, openPositions: 0, compliance: 99.8 });
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -84,32 +84,45 @@ export default function DashboardPage() {
     const fetchData = async () => {
         setIsLoading(true);
 
-        const { data: jobsData, error: jobsError } = await supabase.from('jobs').select('*').limit(5);
-        if (jobsError) console.error("Error fetching jobs", jobsError);
-        else setJobs(jobsData || []);
+        const jobsPromise = supabase.from('jobs').select('*').limit(5);
+        const applicantsPromise = supabase.from('applicants').select('status');
+        const employeeCountPromise = supabase.from('employees').select('*', { count: 'exact', head: true });
+        const openPositionsPromise = supabase.from('jobs').select('*', { count: 'exact', head: true }).not('status', 'eq', 'Closed');
+        const employeesPromise = supabase.from('employees').select('role');
+        const analyticsPromise = supabase.from('analytics').select('attritionPrediction').limit(1).single();
 
-        const { data: applicantsData, error: applicantsError } = await supabase.from('applicants').select('status');
-        if (applicantsError) console.error("Error fetching applicants", applicantsError);
-        else setApplicants(applicantsData || []);
+        const [
+            jobsRes,
+            applicantsRes,
+            employeeCountRes,
+            openPositionsRes,
+            employeesRes,
+            analyticsRes
+        ] = await Promise.all([
+            jobsPromise, 
+            applicantsPromise, 
+            employeeCountPromise, 
+            openPositionsPromise,
+            employeesPromise,
+            analyticsPromise
+        ]);
 
-        const { count: employeeCount, error: empCountError } = await supabase.from('employees').select('*', { count: 'exact', head: true });
-        if (empCountError) console.error("Error fetching employee count", empCountError);
+        if (jobsRes.error) console.error("Error fetching jobs", jobsRes.error);
+        else setJobs(jobsRes.data || []);
+
+        if (applicantsRes.error) console.error("Error fetching applicants", applicantsRes.error);
+        else setApplicants(applicantsRes.data || []);
+
+        if (employeesRes.error) console.error("Error fetching employees for chart", employeesRes.error);
+        else setEmployees(employeesRes.data || []);
         
-        const { count: openPositionsCount, error: openPosError } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).not('status', 'eq', 'Closed');
-        if (openPosError) console.error("Error fetching open positions", openPosError);
-
-        const { data: employeesData, error: employeesError } = await supabase.from('employees').select('role');
-        if (employeesError) console.error("Error fetching employees for chart", employeesError);
-        else setEmployees(employeesData || []);
-        
-        const { data: analyticsData, error: analyticsError } = await supabase.from('analytics').select('attritionPrediction').limit(1).single();
-        const attritionMatch = analyticsData?.attritionPrediction.match(/(\d+\.\d+)/);
+        const attritionMatch = analyticsRes.data?.attritionPrediction.match(/(\d+\.\d+)/);
         const attritionRate = attritionMatch ? parseFloat(attritionMatch[1]) : 8.2;
 
         setStats(prev => ({
             ...prev,
-            employees: employeeCount || 0,
-            openPositions: openPositionsCount || 0,
+            employees: employeeCountRes.count || 0,
+            openPositions: openPositionsRes.count || 0,
             attrition: attritionRate,
         }));
         
@@ -265,5 +278,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
-    

@@ -12,31 +12,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { generateAptitudeTest, type AptitudeTestOutput } from '@/ai/flows/aptitude-test-generator';
+import { generateTypingTest } from '@/ai/flows/typing-test-generator';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight, CheckCircle, Award, Building, User, Bell, Keyboard, Timer, Target } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-
-// Mock data that would typically come from a database
-const allApplicants = [
-  { id: 1, name: "Charlie Davis", email: "charlie.d@example.com", status: "Pending Review", role: "Chat Support", assignedTest: 'aptitude' as 'aptitude' | 'typing' | null },
-  { id: 2, name: "Diana Smith", email: "diana.s@example.com", status: "Interview Scheduled", role: "Product Manager", assignedTest: null },
-  { id: 3, name: "Ethan Johnson", email: "ethan.j@example.com", status: "Rejected", role: "Data Analyst", assignedTest: null },
-  { id: 4, name: "Fiona White", email: "fiona.w@example.com", status: "Pending Review", role: "UX Designer", assignedTest: 'typing' as 'aptitude' | 'typing' | null },
-  { id: 5, name: "George Black", email: "george.b@example.com", status: "Offer Extended", role: "Backend Developer", assignedTest: null },
-  { id: 8, name: "Jennifer Wilson", email: "j.wilson@example.com", status: "New", role: "Chat Support", assignedTest: 'aptitude' as 'aptitude' | 'typing' | null },
-];
-type Applicant = typeof allApplicants[0];
+import { supabase } from '@/lib/supabaseClient';
+import type { Applicant } from '@/lib/types';
 
 const testSchema = z.object({
   answers: z.array(z.object({
     answer: z.string({ required_error: "Please select an answer."}).min(1, "Please select an answer."),
   })),
 });
-
-const sampleTypingText = "The quick brown fox jumps over the lazy dog. This sentence contains all the letters of the alphabet, making it a perfect tool for practicing typing. Speed and accuracy are both important metrics for any professional who relies on a keyboard for their daily work. Consistent practice is the key to improvement. Remember to maintain good posture and take breaks to avoid strain.";
 
 type Stage = 'loading' | 'portal' | 'aptitude_test' | 'typing_test' | 'results';
 
@@ -49,6 +39,7 @@ export default function ApplicantPortalPage() {
   const [testScore, setTestScore] = useState(0);
   
   // Typing test state
+  const [typingText, setTypingText] = useState("");
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(0);
   const [userInput, setUserInput] = useState('');
@@ -70,21 +61,32 @@ export default function ApplicantPortalPage() {
 
   // Fetch applicant data and check for assessments
   useEffect(() => {
-    const applicantId = Number(params.id);
-    const foundApplicant = allApplicants.find(a => a.id === applicantId);
-    if (foundApplicant) {
-      setApplicant(foundApplicant);
-      setStage('portal');
-      // Simulate checking for an assigned test after a short delay
-      setTimeout(() => {
-        if (foundApplicant.assignedTest) {
-          setShowNotification(true);
+    const fetchApplicantData = async () => {
+        const applicantId = Number(params.id);
+        if (isNaN(applicantId)) {
+            setStage('portal'); // or an error stage
+            return;
         }
-      }, 2000);
-    } else {
-      // Handle applicant not found
-      setStage('portal'); // Or an error stage
+
+        const { data, error } = await supabase
+            .from('applicants')
+            .select('*')
+            .eq('id', applicantId)
+            .single();
+
+        if (error || !data) {
+            console.error(error);
+            setApplicant(null);
+            setStage('portal');
+        } else {
+            setApplicant(data);
+            setStage('portal');
+            if (data.assigned_test && !data.aptitude_score && !data.typing_wpm) {
+                setTimeout(() => setShowNotification(true), 2000);
+            }
+        }
     }
+    fetchApplicantData();
   }, [params.id]);
 
   // Timer logic for typing test
@@ -127,18 +129,30 @@ export default function ApplicantPortalPage() {
     }
   }, [applicant, replace, toast]);
 
-  const startTypingTest = () => {
+  const startTypingTest = useCallback(async () => {
+    if (!applicant) return;
     setShowNotification(false);
-    setStage('typing_test');
-    setIsTestRunning(true);
-    setTimeLeft(60);
-    setUserInput('');
-    setWpm(0);
-    setAccuracy(0);
-  }
+    setIsLoading(true);
+    try {
+        const { testContent } = await generateTypingTest({ jobRole: applicant.role });
+        setTypingText(testContent);
+        setStage('typing_test');
+        setIsTestRunning(true);
+        setTimeLeft(60);
+        setUserInput('');
+        setWpm(0);
+        setAccuracy(0);
+        toast({ title: 'Typing Test Started!', description: 'Begin typing when you are ready.' });
+    } catch(e) {
+        toast({title: "Error", description: "Could not start typing test.", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+    }
+  }, [applicant, toast]);
 
-  function submitAptitudeTest(values: z.infer<typeof testSchema>) {
-    if (!testData) return;
+
+  async function submitAptitudeTest(values: z.infer<typeof testSchema>) {
+    if (!testData || !applicant) return;
     let correctAnswers = 0;
     testData.questions.forEach((q, index) => {
       if (values.answers[index].answer === q.correctAnswer) {
@@ -146,11 +160,18 @@ export default function ApplicantPortalPage() {
       }
     });
     setTestScore(correctAnswers);
+    
+    await supabase
+        .from('applicants')
+        .update({ aptitude_score: `${correctAnswers} / ${testData.questions.length}`, assigned_test: null })
+        .eq('id', applicant.id);
+
     setStage('results');
     toast({ title: 'Aptitude Test Submitted!', description: 'Your results are ready.' });
   }
 
-  const endTypingTest = useCallback(() => {
+  const endTypingTest = useCallback(async () => {
+    if (!applicant) return;
     setIsTestRunning(false);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
@@ -160,7 +181,7 @@ export default function ApplicantPortalPage() {
     
     let correctChars = 0;
     userInput.split('').forEach((char, index) => {
-      if (sampleTypingText[index] === char) {
+      if (typingText[index] === char) {
         correctChars++;
       }
     });
@@ -169,11 +190,17 @@ export default function ApplicantPortalPage() {
     
     setWpm(grossWpm);
     setAccuracy(finalAccuracy);
+
+    await supabase
+        .from('applicants')
+        .update({ typing_wpm: grossWpm, typing_accuracy: finalAccuracy, assigned_test: null })
+        .eq('id', applicant.id);
+
     setStage('results');
     toast({ title: 'Typing Test Complete!', description: 'Your results have been submitted to HR.' });
-  }, [userInput, timeLeft]);
+  }, [userInput, timeLeft, typingText, applicant]);
 
-  if (stage === 'loading' || !applicant) {
+  if (stage === 'loading') {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-muted/20 p-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -181,10 +208,25 @@ export default function ApplicantPortalPage() {
     );
   }
 
+  if (!applicant) {
+     return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted/20 p-4 font-sans">
+            <div className="w-full max-w-3xl text-center">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Applicant Not Found</CardTitle>
+                        <CardDescription>We could not find an application with this ID. Please check the link or contact HR.</CardDescription>
+                    </CardHeader>
+                 </Card>
+            </div>
+        </div>
+    )
+  }
+
   const handleStartTest = () => {
-    if (applicant.assignedTest === 'aptitude') {
+    if (applicant.assigned_test === 'aptitude') {
       startAptitudeTest();
-    } else if (applicant.assignedTest === 'typing') {
+    } else if (applicant.assigned_test === 'typing') {
       startTypingTest();
     }
   };
@@ -195,7 +237,7 @@ export default function ApplicantPortalPage() {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Welcome, {applicant.name}!</CardTitle>
+              <CardTitle>Welcome, {applicant.full_name}!</CardTitle>
               <CardDescription>This is your personal application portal. Your applicant ID is <span className="font-mono font-bold">{`APP-00${applicant.id}`}</span>.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -275,7 +317,7 @@ export default function ApplicantPortalPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="p-4 rounded-md bg-muted/50 text-lg leading-relaxed font-mono tracking-wider">
-                      {sampleTypingText.split('').map((char, index) => {
+                      {typingText.split('').map((char, index) => {
                         let color = "text-muted-foreground";
                         if (index < userInput.length) {
                           color = char === userInput[index] ? "text-green-500" : "text-red-500 underline";
@@ -295,7 +337,7 @@ export default function ApplicantPortalPage() {
                     />
                 </CardContent>
                  <CardFooter>
-                    <Button onClick={endTypingTest} className="w-full" variant="secondary">
+                    <Button onClick={endTypingTest} className="w-full" variant="secondary" disabled={!isTestRunning}>
                         <CheckCircle className="mr-2 h-4 w-4" /> End Test Manually
                     </Button>
                 </CardFooter>
@@ -310,14 +352,14 @@ export default function ApplicantPortalPage() {
               <CardDescription>Thank you for taking the time. Your results have been submitted.</CardDescription>
             </CardHeader>
             <CardContent>
-              {applicant.assignedTest === 'aptitude' && testData && (
+              {applicant.assigned_test === 'aptitude' && testData && (
                 <div className="space-y-4">
                   <p className="text-xl">Your Aptitude Score:</p>
                   <p className="text-6xl font-bold">{testScore} / {testData.questions.length}</p>
                   <Progress value={(testScore / testData.questions.length) * 100} className="w-3/4 mx-auto" />
                 </div>
               )}
-              {applicant.assignedTest === 'typing' && (
+              {applicant.assigned_test === 'typing' && (
                   <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 rounded-lg bg-muted">
                           <Timer className="mx-auto h-8 w-8 text-primary mb-2" />
