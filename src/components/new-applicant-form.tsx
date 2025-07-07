@@ -124,10 +124,11 @@ export function NewApplicantForm() {
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
+      setIsCameraOpen(false);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings.',
+        description: 'Please enable camera permissions in your browser settings to use this feature.',
       });
     }
   }, [toast]);
@@ -251,14 +252,6 @@ export function NewApplicantForm() {
                 <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
                 <div className="absolute inset-0 border-4 border-dashed border-primary/50 m-4 rounded-lg"></div>
             </div>
-            {hasCameraPermission === false && (
-                <Alert variant="destructive">
-                  <AlertTitle>Camera Access Required</AlertTitle>
-                  <AlertDescription>
-                    Please allow camera access to use this feature.
-                  </Aler_Description>
-                </Alert>
-            )}
             <DialogFooter>
                 <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
                     <Scan className="mr-2 h-4 w-4" />
