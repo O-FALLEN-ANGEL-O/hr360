@@ -16,7 +16,6 @@ import { Loader2, User, Upload, Camera, Scan, Sparkles, CheckCircle, Send } from
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { supabase } from '@/lib/supabaseClient';
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name is required."),
@@ -149,21 +148,21 @@ export function NewApplicantForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.from('applicants').insert([
-        {
-          full_name: values.fullName,
-          email: values.email,
-          phone: values.phone,
-          resume_text: values.resumeText,
-          resume_summary: values.resumeSummary,
-          role: 'Walk-in Applicant',
-          source: 'Walk-in Kiosk',
-          status: 'New'
-        }
-      ]).select().single();
+      const response = await fetch('/api/applicants/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit application.');
+      }
+      
+      const data = await response.json();
+
+      if (!data || !data.id) {
+        throw new Error("Failed to create applicant. No data returned from server.");
       }
 
       setNewApplicantId(data.id);
@@ -174,9 +173,10 @@ export function NewApplicantForm() {
       });
     } catch (error) {
       console.error("Error submitting applicant:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast({
         title: "Error",
-        description: "Failed to submit application. Please check your details and try again.",
+        description: `Failed to submit application: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -248,7 +248,7 @@ export function NewApplicantForm() {
                 <DialogTitle>Scan Your Resume</DialogTitle>
             </DialogHeader>
              <div className='relative'>
-                <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted />
+                <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
                 <div className="absolute inset-0 border-4 border-dashed border-primary/50 m-4 rounded-lg"></div>
             </div>
             {hasCameraPermission === false && (
@@ -256,7 +256,7 @@ export function NewApplicantForm() {
                   <AlertTitle>Camera Access Required</AlertTitle>
                   <AlertDescription>
                     Please allow camera access to use this feature.
-                  </AlertDescription>
+                  </Aler_Description>
                 </Alert>
             )}
             <DialogFooter>

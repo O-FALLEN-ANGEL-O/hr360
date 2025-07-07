@@ -89,6 +89,36 @@ export default function ApplicantPortalPage() {
     fetchApplicantData();
   }, [params.id]);
 
+  const endTypingTest = useCallback(async () => {
+    if (!applicant) return;
+    setIsTestRunning(false);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
+    const wordsTyped = (userInput.trim().length / 5);
+    const timeElapsedMinutes = (60 - timeLeft) / 60;
+    const grossWpm = timeElapsedMinutes > 0 ? Math.round(wordsTyped / timeElapsedMinutes) : 0;
+    
+    let correctChars = 0;
+    userInput.split('').forEach((char, index) => {
+      if (typingText[index] === char) {
+        correctChars++;
+      }
+    });
+
+    const finalAccuracy = userInput.length > 0 ? Math.round((correctChars / userInput.length) * 100) : 0;
+    
+    setWpm(grossWpm);
+    setAccuracy(finalAccuracy);
+
+    await supabase
+        .from('applicants')
+        .update({ typing_wpm: grossWpm, typing_accuracy: finalAccuracy, assigned_test: null })
+        .eq('id', applicant.id);
+
+    setStage('results');
+    toast({ title: 'Typing Test Complete!', description: 'Your results have been submitted to HR.' });
+  }, [userInput, timeLeft, typingText, applicant, toast]);
+
   // Timer logic for typing test
   useEffect(() => {
     if (isTestRunning && timeLeft > 0) {
@@ -102,7 +132,7 @@ export default function ApplicantPortalPage() {
     return () => {
       if(timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [isTestRunning, timeLeft]);
+  }, [isTestRunning, timeLeft, endTypingTest]);
 
 
   const startAptitudeTest = useCallback(async () => {
@@ -169,36 +199,6 @@ export default function ApplicantPortalPage() {
     setStage('results');
     toast({ title: 'Aptitude Test Submitted!', description: 'Your results are ready.' });
   }
-
-  const endTypingTest = useCallback(async () => {
-    if (!applicant) return;
-    setIsTestRunning(false);
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-
-    const wordsTyped = (userInput.trim().length / 5);
-    const timeElapsedMinutes = (60 - timeLeft) / 60;
-    const grossWpm = timeElapsedMinutes > 0 ? Math.round(wordsTyped / timeElapsedMinutes) : 0;
-    
-    let correctChars = 0;
-    userInput.split('').forEach((char, index) => {
-      if (typingText[index] === char) {
-        correctChars++;
-      }
-    });
-
-    const finalAccuracy = userInput.length > 0 ? Math.round((correctChars / userInput.length) * 100) : 0;
-    
-    setWpm(grossWpm);
-    setAccuracy(finalAccuracy);
-
-    await supabase
-        .from('applicants')
-        .update({ typing_wpm: grossWpm, typing_accuracy: finalAccuracy, assigned_test: null })
-        .eq('id', applicant.id);
-
-    setStage('results');
-    toast({ title: 'Typing Test Complete!', description: 'Your results have been submitted to HR.' });
-  }, [userInput, timeLeft, typingText, applicant]);
 
   if (stage === 'loading') {
     return (
