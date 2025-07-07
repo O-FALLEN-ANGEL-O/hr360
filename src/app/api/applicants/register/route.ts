@@ -13,7 +13,7 @@ const applicantSchema = z.object({
 
 // Use service role key on the server to bypass RLS for this trusted route
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
