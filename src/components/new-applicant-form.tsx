@@ -16,6 +16,7 @@ import { Loader2, User, Upload, Camera, Scan, Sparkles, CheckCircle, Send } from
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { supabase } from '@/lib/supabaseClient';
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name is required."),
@@ -39,7 +40,7 @@ export function NewApplicantForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [newApplicantId] = useState(8); // Mock new ID for walk-in Jennifer Wilson
+  const [newApplicantId, setNewApplicantId] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const { toast } = useToast();
@@ -142,17 +143,38 @@ export function NewApplicantForm() {
   }, [isCameraOpen, getCameraPermission]);
 
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    console.log("Submitting new applicant:", values);
-    setTimeout(() => {
-        setIsSubmitting(false);
-        setIsSubmitted(true);
-        toast({
-            title: "Registration Complete!",
-            description: "Thank you for registering. Redirecting you to your personal applicant portal...",
-        })
-    }, 1500);
+    try {
+      const { data, error } = await supabase.from('applicants').insert([
+        {
+          full_name: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          resume_text: values.resumeText,
+        }
+      ]).select().single();
+
+      if (error) {
+        throw error;
+      }
+
+      setNewApplicantId(data.id);
+      setIsSubmitted(true);
+      toast({
+        title: "Registration Complete!",
+        description: "Thank you for registering. Redirecting you to your personal applicant portal...",
+      });
+    } catch (error) {
+      console.error("Error submitting applicant:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit applicant. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isSubmitted) {
