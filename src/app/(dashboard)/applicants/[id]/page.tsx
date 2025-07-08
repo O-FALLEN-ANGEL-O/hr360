@@ -10,7 +10,7 @@ import { User, Mail, Phone, Building, FileText, Keyboard, Loader2, Badge, Messag
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Applicant } from "@/lib/types"
 
 const InfoCard = ({ icon, title, value }: { icon: React.ReactNode, title: string, value: string | null }) => (
@@ -30,9 +30,10 @@ export default function ApplicantProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [notes, setNotes] = useState("");
-    const supabase = createClient();
+    const supabase = useSupabase();
 
     const fetchApplicant = useCallback(async () => {
+        if (!supabase) return;
         setIsLoading(true);
         const applicantId = Number(params.id);
         const { data, error } = await supabase
@@ -56,7 +57,7 @@ export default function ApplicantProfilePage() {
     }, [fetchApplicant]);
     
     const handleSaveNotes = async () => {
-      if(!applicant) return;
+      if(!applicant || !supabase) return;
       setIsSaving(true);
       const { error } = await supabase
         .from('applicants')
@@ -72,7 +73,7 @@ export default function ApplicantProfilePage() {
     }
 
     const handleAssignTest = async (testType: 'Aptitude' | 'Typing') => {
-        if (!applicant) return;
+        if (!applicant || !supabase) return;
         const { error } = await supabase
             .from('applicants')
             .update({ assigned_test: testType.toLowerCase() as 'aptitude' | 'typing' })

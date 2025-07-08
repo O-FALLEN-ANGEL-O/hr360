@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabase } from "@/hooks/use-supabase-client";
 import type { Applicant } from '@/lib/types';
 
 const testSchema = z.object({
@@ -49,7 +49,7 @@ export default function ApplicantPortalPage() {
 
   const params = useParams();
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const testForm = useForm<z.infer<typeof testSchema>>({
     resolver: zodResolver(testSchema),
@@ -65,7 +65,7 @@ export default function ApplicantPortalPage() {
   // Fetch applicant data and check for assessments
   useEffect(() => {
     const fetchApplicantData = async () => {
-        if (isNaN(applicantId)) {
+        if (isNaN(applicantId) || !supabase) {
             setStage('portal'); // or an error stage
             return;
         }
@@ -92,7 +92,7 @@ export default function ApplicantPortalPage() {
   }, [params.id, supabase, applicantId]);
 
   const endTypingTest = useCallback(async () => {
-    if (!applicant) return;
+    if (!applicant || !supabase) return;
     setIsTestRunning(false);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
@@ -184,7 +184,7 @@ export default function ApplicantPortalPage() {
 
 
   async function submitAptitudeTest(values: z.infer<typeof testSchema>) {
-    if (!testData || !applicant) return;
+    if (!testData || !applicant || !supabase) return;
     let correctAnswers = 0;
     testData.questions.forEach((q, index) => {
       if (values.answers[index].answer === q.correctAnswer) {

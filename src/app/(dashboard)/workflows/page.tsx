@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { createClient } from "@/lib/supabase/client"
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Workflow } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -118,7 +118,7 @@ export default function WorkflowsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const form = useForm<z.infer<typeof workflowSchema>>({
     resolver: zodResolver(workflowSchema),
@@ -129,6 +129,7 @@ export default function WorkflowsPage() {
   });
 
   const fetchWorkflows = useCallback(async () => {
+    if (!supabase) return;
     setIsLoading(true);
     const { data, error } = await supabase
       .from('workflows')
@@ -149,6 +150,8 @@ export default function WorkflowsPage() {
   }, [fetchWorkflows]);
 
   async function onSubmit(values: z.infer<typeof workflowSchema>) {
+    if (!supabase) return;
+
     const newWorkflowData = {
       title: values.title,
       description: values.description,
@@ -266,11 +269,11 @@ export default function WorkflowsPage() {
                             <li>Getting Started</li>
                         </ul>
                     </CardContent>
-                    <div className="border-t p-4">
+                    <CardFooter>
                         <Button variant="outline" className="w-full" onClick={() => setIsGuideOpen(true)}>
                           Open Guide <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
-                    </div>
+                    </CardFooter>
                 </Card>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">

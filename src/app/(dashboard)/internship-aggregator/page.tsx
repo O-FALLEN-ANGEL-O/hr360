@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PageHeader } from "@/components/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { Briefcase } from "lucide-react"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Job } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -24,10 +24,11 @@ export default function InternshipAggregatorPage() {
     const { toast } = useToast();
     const [internships, setInternships] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const supabase = createClient();
+    const supabase = useSupabase();
 
     useEffect(() => {
       const fetchInternships = async () => {
+        if (!supabase) return;
         setIsLoading(true);
         const { data, error } = await supabase
           .from('jobs')

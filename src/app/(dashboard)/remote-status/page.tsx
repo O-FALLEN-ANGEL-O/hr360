@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { createClient } from '@/lib/supabase/client';
+import { useSupabase } from "@/hooks/use-supabase-client";
 import type { Employee } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,25 +33,25 @@ const getStatusBadgeClass = (status: string) => {
 export default function RemoteStatusPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
-
-  const fetchEmployees = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase.from('employees').select('*');
-    if (error) {
-      console.error(error);
-    } else {
-      setEmployees(data || []);
-    }
-    setIsLoading(false);
-  }
+  const supabase = useSupabase();
 
   useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!supabase) return;
+      setIsLoading(true);
+      const { data, error } = await supabase.from('employees').select('*');
+      if (error) {
+        console.error(error);
+      } else {
+        setEmployees(data || []);
+      }
+      setIsLoading(false);
+    }
     fetchEmployees();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   const handleStatusChange = async (employeeId: number, newStatus: Status) => {
+    if (!supabase) return;
     // Optimistically update the UI
     setEmployees(
       employees.map((emp) =>

@@ -38,7 +38,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Job } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -66,7 +66,7 @@ export default function JobArchivePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
@@ -80,6 +80,7 @@ export default function JobArchivePage() {
   });
 
   const fetchJobs = async () => {
+    if (!supabase) return;
     setIsLoading(true);
     const { data, error } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
     if (error) {
@@ -94,9 +95,10 @@ export default function JobArchivePage() {
   useEffect(() => {
     fetchJobs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   async function onSubmit(values: z.infer<typeof jobSchema>) {
+    if (!supabase) return;
     const { data, error } = await supabase.from('jobs').insert([{
       ...values,
       applicants_count: 0

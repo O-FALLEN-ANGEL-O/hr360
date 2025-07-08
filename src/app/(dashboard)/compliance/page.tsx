@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Document } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -57,7 +57,7 @@ export default function CompliancePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
@@ -68,24 +68,24 @@ export default function CompliancePage() {
     },
   });
 
-  const fetchDocuments = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase.from('documents').select('*');
-    if (error) {
-      console.error(error);
-      toast({ title: "Error", description: "Could not fetch documents", variant: "destructive" });
-    } else {
-      setDocuments(data || []);
-    }
-    setIsLoading(false);
-  }
-
   useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!supabase) return;
+      setIsLoading(true);
+      const { data, error } = await supabase.from('documents').select('*');
+      if (error) {
+        console.error(error);
+        toast({ title: "Error", description: "Could not fetch documents", variant: "destructive" });
+      } else {
+        setDocuments(data || []);
+      }
+      setIsLoading(false);
+    }
     fetchDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase, toast]);
 
   async function onSubmit(values: z.infer<typeof documentSchema>) {
+    if (!supabase) return;
     const { data, error } = await supabase.from('documents').insert([{
       ...values,
       status: "Draft",

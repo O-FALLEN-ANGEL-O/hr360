@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { College, Applicant } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -69,7 +69,7 @@ export default function CampusHrPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const form = useForm<z.infer<typeof collegeSchema>>({
     resolver: zodResolver(collegeSchema),
@@ -77,6 +77,7 @@ export default function CampusHrPage() {
   });
 
   const fetchData = useCallback(async () => {
+    if (!supabase) return;
     setIsLoading(true);
     const collegePromise = supabase.from('colleges').select('*');
     const applicantPromise = supabase.from('applicants').select('*').ilike('role', '%Intern%');
@@ -97,6 +98,7 @@ export default function CampusHrPage() {
   }, [fetchData]);
   
   async function onSubmit(values: z.infer<typeof collegeSchema>) {
+    if (!supabase) return;
     const { data, error } = await supabase.from('colleges').insert([
       { ...values, status: 'Invited', resumes_received: 0 }
     ]).select();
@@ -112,6 +114,7 @@ export default function CampusHrPage() {
   }
 
   const handleApplicantStatusChange = async (applicantId: number, newStatus: Applicant['status']) => {
+    if (!supabase) return;
     const { error } = await supabase.from('applicants').update({ status: newStatus }).eq('id', applicantId);
 
     if (error) {

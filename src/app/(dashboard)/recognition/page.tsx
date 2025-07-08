@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Trophy, Gift, Sparkles, UserCheck, MessageSquare, PartyPopper, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Employee, Kudo } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -35,10 +35,11 @@ export default function RecognitionPage() {
   const [leaderboard, setLeaderboard] = useState<Employee[]>([]);
   const [recentKudos, setRecentKudos] = useState<Kudo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!supabase) return;
       setIsLoading(true);
 
       const leaderboardPromise = supabase.from('employees').select('*').order('points', { ascending: false }).limit(5);

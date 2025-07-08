@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { aiEmailResponder } from "@/ai/flows/ai-email-responder"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Applicant } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -39,9 +39,10 @@ export default function ApplicantsPage() {
   const [isSendingEmail, setIsSendingEmail] = useState<number | null>(null);
   const driveModeInterval = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const fetchApplicants = useCallback(async (showToast = false) => {
+    if (!supabase) return;
     if (!showToast) setIsLoading(true);
     else setIsScanning(true);
 
@@ -64,9 +65,11 @@ export default function ApplicantsPage() {
   }, [toast, applicants.length, supabase]);
 
   useEffect(() => {
-    fetchApplicants();
+    if (supabase) {
+      fetchApplicants();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     if (isDriveMode) {
@@ -110,6 +113,7 @@ export default function ApplicantsPage() {
     newStatus: Applicant['status'],
     context: 'Invitation to Interview' | 'Offer Extended' | 'Polite Rejection'
   ) => {
+    if (!supabase) return;
     const applicant = applicants.find(a => a.id === applicantId);
     if (!applicant) return;
 

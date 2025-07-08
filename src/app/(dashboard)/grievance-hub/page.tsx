@@ -33,7 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Grievance } from "@/lib/types"
 import { format } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -60,7 +60,7 @@ export default function GrievanceHubPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabase();
 
   const form = useForm<z.infer<typeof ticketSchema>>({
     resolver: zodResolver(ticketSchema),
@@ -72,24 +72,24 @@ export default function GrievanceHubPage() {
     },
   });
 
-  const fetchTickets = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase.from('grievances').select('*').order('created_at', { ascending: false });
-    if(error) {
-      console.error(error);
-      toast({title: "Error", description: "Could not fetch grievances", variant: "destructive"});
-    } else {
-      setTickets(data || []);
-    }
-    setIsLoading(false);
-  }
-
   useEffect(() => {
+    const fetchTickets = async () => {
+      if (!supabase) return;
+      setIsLoading(true);
+      const { data, error } = await supabase.from('grievances').select('*').order('created_at', { ascending: false });
+      if(error) {
+        console.error(error);
+        toast({title: "Error", description: "Could not fetch grievances", variant: "destructive"});
+      } else {
+        setTickets(data || []);
+      }
+      setIsLoading(false);
+    }
     fetchTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase, toast]);
 
   async function onSubmit(values: z.infer<typeof ticketSchema>) {
+    if (!supabase) return;
     const { data, error } = await supabase.from('grievances').insert([{
       ...values,
       assigned_to: values.category === 'Policy' || values.category === 'Facilities' ? "Legal" : "HR",

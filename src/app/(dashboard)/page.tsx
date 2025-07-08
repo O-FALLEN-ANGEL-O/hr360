@@ -41,10 +41,10 @@ import {
   BarChart as RechartsBarChart,
   PieChart as RechartsPieChart,
 } from "recharts"
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { createClient } from '@/lib/supabase/client'
+import { useSupabase } from "@/hooks/use-supabase-client"
 import type { Job, Applicant, Employee } from "@/lib/types"
 
 const statusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
@@ -78,60 +78,61 @@ export default function DashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useSupabase();
   
+  const fetchData = useCallback(async () => {
+    if (!supabase) return;
+    setIsLoading(true);
+
+    const jobsPromise = supabase.from('jobs').select('*').not('status', 'eq', 'Closed').order('created_at', { ascending: false }).limit(5);
+    const applicantsPromise = supabase.from('applicants').select('status');
+    const employeeCountPromise = supabase.from('employees').select('*', { count: 'exact', head: true });
+    const openPositionsPromise = supabase.from('jobs').select('*', { count: 'exact', head: true }).not('status', 'eq', 'Closed');
+    const employeesPromise = supabase.from('employees').select('role');
+    const analyticsPromise = supabase.from('analytics').select('attritionPrediction').limit(1).single();
+
+    const [
+        jobsRes,
+        applicantsRes,
+        employeeCountRes,
+        openPositionsRes,
+        employeesRes,
+        analyticsRes
+    ] = await Promise.all([
+        jobsPromise, 
+        applicantsPromise, 
+        employeeCountPromise, 
+        openPositionsPromise,
+        employeesPromise,
+        analyticsPromise
+    ]);
+
+    if (jobsRes.error) console.error("Error fetching jobs", jobsRes.error);
+    else setJobs(jobsRes.data || []);
+
+    if (applicantsRes.error) console.error("Error fetching applicants", applicantsRes.error);
+    else setApplicants(applicantsRes.data || []);
+
+    if (employeesRes.error) console.error("Error fetching employees for chart", employeesRes.error);
+    else setEmployees(employeesRes.data || []);
+    
+    const attritionMatch = analyticsRes.data?.attritionPrediction.match(/(\d+\.\d+)/);
+    const attritionRate = attritionMatch ? parseFloat(attritionMatch[1]) : 8.2;
+
+    setStats(prev => ({
+        ...prev,
+        employees: employeeCountRes.count || 0,
+        openPositions: openPositionsRes.count || 0,
+        attrition: attritionRate,
+    }));
+    
+    setIsLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
     setMounted(true);
-    const fetchData = async () => {
-        setIsLoading(true);
-
-        const jobsPromise = supabase.from('jobs').select('*').not('status', 'eq', 'Closed').order('created_at', { ascending: false }).limit(5);
-        const applicantsPromise = supabase.from('applicants').select('status');
-        const employeeCountPromise = supabase.from('employees').select('*', { count: 'exact', head: true });
-        const openPositionsPromise = supabase.from('jobs').select('*', { count: 'exact', head: true }).not('status', 'eq', 'Closed');
-        const employeesPromise = supabase.from('employees').select('role');
-        const analyticsPromise = supabase.from('analytics').select('attritionPrediction').limit(1).single();
-
-        const [
-            jobsRes,
-            applicantsRes,
-            employeeCountRes,
-            openPositionsRes,
-            employeesRes,
-            analyticsRes
-        ] = await Promise.all([
-            jobsPromise, 
-            applicantsPromise, 
-            employeeCountPromise, 
-            openPositionsPromise,
-            employeesPromise,
-            analyticsPromise
-        ]);
-
-        if (jobsRes.error) console.error("Error fetching jobs", jobsRes.error);
-        else setJobs(jobsRes.data || []);
-
-        if (applicantsRes.error) console.error("Error fetching applicants", applicantsRes.error);
-        else setApplicants(applicantsRes.data || []);
-
-        if (employeesRes.error) console.error("Error fetching employees for chart", employeesRes.error);
-        else setEmployees(employeesRes.data || []);
-        
-        const attritionMatch = analyticsRes.data?.attritionPrediction.match(/(\d+\.\d+)/);
-        const attritionRate = attritionMatch ? parseFloat(attritionMatch[1]) : 8.2;
-
-        setStats(prev => ({
-            ...prev,
-            employees: employeeCountRes.count || 0,
-            openPositions: openPositionsRes.count || 0,
-            attrition: attritionRate,
-        }));
-        
-        setIsLoading(false);
-    };
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchData])
 
   const departmentData = useMemo(() => {
     const counts = employees.reduce((acc, emp) => {
