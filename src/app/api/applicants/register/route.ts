@@ -34,14 +34,14 @@ export async function POST(request: Request) {
         source: 'Walk-in Kiosk',
         status: 'New'
       }
-    ]).select().single();
+    ]).select();
 
     if (error) {
       console.error('Supabase insert error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data[0]);
 
   } catch (error) {
     console.error('API Error:', error);
