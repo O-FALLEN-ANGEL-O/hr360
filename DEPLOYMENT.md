@@ -21,7 +21,7 @@ Your application **will not work** until you set the following environment varia
 - In the **KEY** field, type: `SUPABASE_URL`
 - In the **VALUE** field, paste your actual Supabase URL: `https://tshferxgarpgtmojlwxo.supabase.co`
 
-Repeat this process for all variables listed below. You can find the values in your local `.env.local` file or your Supabase dashboard.
+Repeat this process for all variables listed below. You can find the values in your local `.env` file or your Supabase dashboard.
 
 A template file with all the required variable names has been provided in `vercel-env-variables.txt` for easy copying.
 
@@ -67,7 +67,7 @@ If you haven't already, you need to set up your database schema using the Supaba
 
 To populate your live application with initial content, run the seed script.
 
-*Note: Make sure your local `.env.local` file is configured to connect to your live Supabase database.*
+*Note: Make sure your local `.env` file is configured to connect to your live Supabase database.*
 
 ```bash
 npm install -g ts-node
@@ -76,7 +76,19 @@ ts-node --esm scripts/seedFakeData.ts
 
 ---
 
-## **Step 4: Verify Deployment**
+## Step 4: Local Development Troubleshooting
+
+**VERY IMPORTANT:** If you add or change variables in your local `.env` file, you **must stop and restart** your Next.js development server for the changes to be applied.
+
+```bash
+# Stop the server with Ctrl+C
+# Then restart it
+npm run dev
+```
+
+---
+
+## **Step 5: Verify Deployment**
 
 -   Visit your deployed Vercel URL.
 -   Navigate through the application. All pages should now load data from your Supabase backend.

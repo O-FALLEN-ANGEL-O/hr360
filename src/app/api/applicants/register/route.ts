@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const parsedData = applicantSchema.safeParse(body);
 
     if (!parsedData.success) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+      console.error('Validation error:', parsedData.error.flatten());
+      return NextResponse.json({ error: 'Invalid input', details: parsedData.error.flatten().fieldErrors }, { status: 400 });
     }
     
     const { fullName, email, phone, resumeText, resumeSummary } = parsedData.data;
@@ -38,7 +39,12 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Supabase insert error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Database error', message: error.message }, { status: 500 });
+    }
+
+    if (!data || data.length === 0) {
+        console.error('Supabase insert error: No data returned after insert.');
+        return NextResponse.json({ error: 'Failed to create applicant record. No data returned.' }, { status: 500 });
     }
 
     return NextResponse.json(data[0]);
